@@ -1,0 +1,11 @@
+__pycache__/
+*.py[cod]
+*$py.class
+venv/
+env/
+ENV/
+*.db
+*.sqlite3
+tempCodeRunnerFile.py
+.vscode/
+.DS_Store

@@ -1,0 +1,250 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>RescueDrone - Dashboard Admin SAR</title>
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.css" />
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@600;700;800&family=Inter:wght@400;500;600;700&family=IBM+Plex+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --bg:#f4f7fb; --panel:#ffffff; --panel-alt:#f8fafc;
+    --ink:#0f172a; --ink-soft:#475569; --ink-faint:#94a3b8; --line:#cbd5e1;
+    --accent:#ff6600; --accent-deep:#e05500; --danger:#ef4444; --success:#16a34a;
+  }
+  *{box-sizing:border-box;}
+  html,body{height:100%; margin:0; padding:0; background:var(--bg); font-family:'Inter',sans-serif; color:var(--ink);}
+  
+  .admin-bar{
+    height:56px; background:#0f172a; color:#fff; padding:0 24px; display:flex; align-items:center;
+    justify-content:space-between; position:sticky; top:0; z-index:1000;
+  }
+  .brand-title{font-family:'Space Grotesk',sans-serif; font-size:16px; font-weight:700; display:flex; align-items:center; gap:10px;}
+  .badge-admin{background:#ff6600; color:#fff; font-size:10px; font-weight:700; padding:3px 8px; border-radius:6px; letter-spacing:0.5px;}
+  
+  .logout-link{color:#f87171; text-decoration:none; font-size:13px; font-weight:600; padding:6px 14px; border:1px solid #7f1d1d; border-radius:8px; transition:0.2s;}
+  .logout-link:hover{background:#7f1d1d; color:#fff;}
+
+  .admin-container{max-width:1400px; margin:0 auto; padding:24px 20px 48px; display:flex; flex-direction:column; gap:24px;}
+  
+  .card{background:#ffffff; border:1px solid #e2e8f0; border-radius:18px; padding:24px; box-shadow:0 8px 24px rgba(15,23,42,0.04);}
+  .card-head{display:flex; align-items:center; justify-content:space-between; margin-bottom:16px;}
+  .card-head h2{font-family:'Space Grotesk',sans-serif; font-size:18px; font-weight:700; margin:0;}
+
+  /* Grid Layout */
+  .dashboard-grid{display:grid; grid-template-columns:2.5fr 1fr; gap:24px;}
+  @media(max-width:1024px){ .dashboard-grid{grid-template-columns:1fr;} }
+
+  #adminMap{height:460px; width:100%; border-radius:14px; border:1px solid #cbd5e1;}
+
+  /* Telemetry HUD */
+  .telemetry-hud{display:grid; grid-template-columns:repeat(auto-fit, minmax(130px, 1fr)); gap:12px; margin-top:16px;}
+  .hud-box{background:#f8fafc; border:1px solid #e2e8f0; border-radius:12px; padding:12px; text-align:center;}
+  .hud-label{font-size:10.5px; font-weight:700; color:#64748b; text-transform:uppercase;}
+  .hud-val{font-family:'IBM Plex Mono',monospace; font-size:18px; font-weight:700; color:#0f172a; margin-top:4px;}
+
+  /* Incident Feed */
+  .incident-list{display:flex; flex-direction:column; gap:12px; max-height:460px; overflow-y:auto;}
+  .incident-item{background:#f8fafc; border:1px solid #e2e8f0; border-radius:12px; padding:14px; transition:0.2s;}
+  .incident-item:hover{border-color:#ff6600;}
+  .incident-item.selected{border-color:#ff6600; background:#fff7ed;}
+  .inc-header{display:flex; align-items:center; justify-content:space-between; font-size:12px; color:#64748b;}
+  .inc-title{font-weight:700; font-size:14px; color:#0f172a; margin:4px 0;}
+
+  .btn-mission{
+    width:100%; padding:11px; border-radius:10px; border:none; background:#ff6600; color:#fff;
+    font-family:'Space Grotesk',sans-serif; font-weight:700; font-size:13px; cursor:pointer; margin-top:8px;
+  }
+  .btn-mission:hover{background:#e05500;}
+
+  /* Table Rekap */
+  table{width:100%; border-collapse:collapse; font-size:13px;}
+  th, td{padding:12px 14px; text-align:left; border-bottom:1px solid #e2e8f0;}
+  th{background:#f8fafc; font-family:'Space Grotesk',sans-serif; font-weight:700; color:#475569;}
+  .pill{display:inline-block; padding:4px 10px; border-radius:20px; font-size:11px; font-weight:700;}
+  .pill.baru{background:#fef3c7; color:#d97706;}
+  .pill.selesai{background:#dcfce7; color:#15803d;}
+</style>
+</head>
+<body>
+
+  <div class="admin-bar">
+    <div class="brand-title">
+      <span>🚁 RescueDrone Command Center</span>
+      <span class="badge-admin">ADMIN PORTAL</span>
+    </div>
+    <a href="/admin/logout" class="logout-link">🔒 Logout Admin</a>
+  </div>
+
+  <div class="admin-container">
+    <!-- DASHBOARD PETA & MISSION CONTROL -->
+    <div class="dashboard-grid">
+      <div class="card">
+        <div class="card-head">
+          <h2>🗺️ Live Map &amp; Telemetri Flight Controller (MAVLink)</h2>
+          <span style="font-size:12px; color:#16a34a; font-weight:700;">● Server Active</span>
+        </div>
+        <div id="adminMap"></div>
+
+        <div class="telemetry-hud">
+          <div class="hud-box"><div class="hud-label">SATELIT GPS</div><div class="hud-val" id="hudSat">14 SAT</div></div>
+          <div class="hud-box"><div class="hud-label">BATERAI DRONE</div><div class="hud-val" id="hudBat" style="color:#16a34a;">92%</div></div>
+          <div class="hud-box"><div class="hud-label">KETINGGIAN</div><div class="hud-val" id="hudAlt">24.5 m</div></div>
+          <div class="hud-box"><div class="hud-label">KECEPATAN</div><div class="hud-val" id="hudSpd">12.8 m/s</div></div>
+          <div class="hud-box"><div class="hud-label">MODE MISI</div><div class="hud-val" id="hudMode">AUTO</div></div>
+        </div>
+      </div>
+
+      <div class="card">
+        <div class="card-head">
+          <h2>📋 Feed Insiden Masuk</h2>
+        </div>
+        <div class="incident-list" id="incidentFeed">
+          <div style="font-size:13px; color:#64748b;">Memuat daftar insiden...</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- REKAP PANGGULAN TABLE -->
+    <div class="card">
+      <div class="card-head">
+        <h2>📊 Rekap Panggilan Insiden (Database SAR)</h2>
+      </div>
+      <table>
+        <thead>
+          <tr>
+            <th>Waktu</th>
+            <th>Pelapor</th>
+            <th>Kontak WA</th>
+            <th>Koordinat GPS</th>
+            <th>Kondisi Pasien</th>
+            <th>Status</th>
+            <th style="text-align:center;">Aksi</th>
+          </tr>
+        </thead>
+        <tbody id="rekapTbody"></tbody>
+      </table>
+      <div id="emptyNote" style="display:none; text-align:center; padding:20px; color:#64748b; font-size:13px;">Belum ada insiden terdaftar.</div>
+    </div>
+  </div>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.js"></script>
+<script>
+  let adminMap = null;
+  let incidentMarkers = [];
+
+  function initAdminMap(){
+    adminMap = L.map('adminMap').setView([-7.9666, 112.6326], 15);
+    L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', { maxZoom: 19 }).addTo(adminMap);
+  }
+  initAdminMap();
+
+  let incidentsCache = [];
+
+  async function loadAdminData(){
+    try {
+      const res = await fetch('/api/incidents');
+      const data = await res.json();
+      incidentsCache = data;
+      renderIncidentFeed(data);
+      renderRekapTable(data);
+    } catch(e){}
+  }
+
+  function renderIncidentFeed(data){
+    const feed = document.getElementById('incidentFeed');
+    if(!data || data.length === 0){
+      feed.innerHTML = '<div style="font-size:13px; color:#64748b;">Belum ada insiden masuk.</div>';
+      return;
+    }
+    feed.innerHTML = data.map(inc => `
+      <div class="incident-item">
+        <div class="inc-header">
+          <span>#${inc.id} &bull; ${inc.received_at ? inc.received_at.substring(11,16) : ''}</span>
+          <span class="pill ${inc.status === 'selesai' ? 'selesai' : 'baru'}">${inc.status === 'selesai' ? 'Selesai' : 'Baru'}</span>
+        </div>
+        <div class="inc-title">${inc.reporter_name || 'Pelapor Web'}</div>
+        <div style="font-size:12px; color:#64748b;">📍 ${inc.latitude.toFixed(4)}, ${inc.longitude.toFixed(4)}</div>
+        ${inc.patient_condition ? '<div style="font-size:12px; color:#ea580c; margin-top:2px;">⚠️ ' + inc.patient_condition + '</div>' : ''}
+        <button class="btn-mission" onclick="sendMission(${inc.id}, ${inc.latitude}, ${inc.longitude})">🚀 Kirim Misi Waypoint ke Drone</button>
+      </div>
+    `).join('');
+  }
+
+  function renderRekapTable(data){
+    const tbody = document.getElementById('rekapTbody');
+    const emptyNote = document.getElementById('emptyNote');
+    if(!data || data.length === 0){ emptyNote.style.display='block'; tbody.innerHTML=''; return; }
+    emptyNote.style.display='none';
+
+    tbody.innerHTML = data.map(r => {
+      const waNum = r.whatsapp_contact ? r.whatsapp_contact.replace(/[^0-9]/g,'') : '';
+      const waLink = waNum ? `<a href="https://wa.me/${waNum.startsWith('0') ? '62' + waNum.slice(1) : waNum}" target="_blank" style="color:#16a34a; font-weight:700; text-decoration:none;">📱 ${r.whatsapp_contact}</a>` : '<span style="color:#94a3b8;">—</span>';
+      return `
+      <tr>
+        <td style="font-family:'IBM Plex Mono',monospace;">${r.received_at || '—'}</td>
+        <td><b>${r.reporter_name || 'Pelapor Web'}</b></td>
+        <td>${waLink}</td>
+        <td style="font-family:'IBM Plex Mono',monospace;">${r.latitude.toFixed(4)}, ${r.longitude.toFixed(4)}</td>
+        <td>${r.patient_condition || '<span style="color:#94a3b8;">Belum diisi</span>'}</td>
+        <td><span class="pill ${r.status === 'selesai' ? 'selesai' : 'baru'}">${r.status === 'selesai' ? 'Sudah Dikunjungi' : 'Belum Dikunjungi'}</span></td>
+        <td style="text-align:center; white-space:nowrap;">
+          <button onclick="editInc(${r.id})" style="background:#f1f5f9; border:1px solid #cbd5e1; color:#0f172a; padding:5px 10px; border-radius:6px; font-weight:600; font-size:11px; cursor:pointer; margin-right:4px;">✏️ Edit</button>
+          <button onclick="deleteInc(${r.id})" style="background:#fef2f2; border:1px solid #fca5a5; color:#dc2626; padding:5px 10px; border-radius:6px; font-weight:600; font-size:11px; cursor:pointer;">🗑️ Hapus</button>
+        </td>
+      </tr>`;
+    }).join('');
+  }
+
+  async function sendMission(id, lat, lng){
+    if(!confirm("Kirim misi waypoint takeoff & landing ke flight controller untuk insiden #" + id + "?")) return;
+    try {
+      const res = await fetch('/api/send_waypoint', {
+        method: 'POST',
+        headers: {'Content-Type':'application/json'},
+        body: JSON.stringify({ incident_id: id, lat: lat, lon: lng, alt: 25 })
+      });
+      const data = await res.json();
+      if(data.ok){
+        alert("✅ Misi berhasil dikirim ke Mission Planner / Flight Controller!");
+        loadAdminData();
+      } else alert("Gagal: " + data.error);
+    } catch(e){ alert("Error: " + e.message); }
+  }
+
+  async function editInc(id){
+    const item = incidentsCache.find(x => x.id === id);
+    if(!item) return;
+    const newName = prompt("Edit Nama Pelapor:", item.reporter_name || ""); if(newName === null) return;
+    const newWa = prompt("Edit Kontak WA:", item.whatsapp_contact || ""); if(newWa === null) return;
+    const newCond = prompt("Edit Kondisi Korban:", item.patient_condition || ""); if(newCond === null) return;
+    const newStat = confirm("Set status menjadi 'Sudah dikunjungi'?") ? "selesai" : "baru";
+
+    try {
+      const res = await fetch('/api/incidents/' + id, {
+        method: 'PUT',
+        headers: {'Content-Type':'application/json'},
+        body: JSON.stringify({ reporter_name: newName, whatsapp_contact: newWa, patient_condition: newCond, status: newStat })
+      });
+      const data = await res.json();
+      if(data.ok){ alert("Insiden #" + id + " berhasil diperbarui!"); loadAdminData(); }
+      else alert("Gagal: " + data.error);
+    } catch(e){ alert("Error: " + e.message); }
+  }
+
+  async function deleteInc(id){
+    if(!confirm("Yakin hapus insiden #" + id + " dari database?")) return;
+    try {
+      const res = await fetch('/api/incidents/' + id, { method: 'DELETE' });
+      const data = await res.json();
+      if(data.ok){ alert("Insiden #" + id + " dihapus!"); loadAdminData(); }
+      else alert("Gagal: " + data.error);
+    } catch(e){ alert("Error: " + e.message); }
+  }
+
+  loadAdminData();
+  setInterval(loadAdminData, 6000);
+</script>
+</body>
+</html>

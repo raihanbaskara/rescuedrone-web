@@ -1,0 +1,938 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>RescueDrone - Airborne Emergency System</title>
+<!-- Google Fonts: Inter, Playfair Display, Space Grotesk, IBM Plex Mono -->
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500;600&family=Inter:wght@300;400;500;600;700&family=Playfair+Display:ital,wght@1,400;1,500;1,600;1,700&family=Space+Grotesk:wght@500;600;700;800&display=swap" rel="stylesheet">
+<!-- Leaflet CSS -->
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.css" />
+
+<style>
+:root {
+  --bg: #0b0f17; 
+  --panel: rgba(15, 23, 42, 0.85); 
+  --panel-border: rgba(255, 255, 255, 0.15);
+  --ink: #f8fafc; 
+  --ink-soft: #cbd5e1; 
+  --ink-faint: #94a3b8; 
+  --accent: #ff6600; 
+  --accent-deep: #e05500; 
+  --accent-soft: rgba(255, 102, 0, 0.15);
+  --danger: #ef4444; 
+  --danger-soft: rgba(239, 68, 68, 0.15);
+  --success: #22c55e; 
+  --success-soft: rgba(34, 197, 94, 0.15);
+  --radius: 16px; 
+  --gbar-h: 64px;
+}
+
+* { box-sizing: border-box; margin: 0; padding: 0; }
+body { 
+  font-family: 'Inter', sans-serif; 
+  background: #000; 
+  color: var(--ink); 
+  -webkit-font-smoothing: antialiased; 
+  overflow-x: hidden; 
+  letter-spacing: -0.02em;
+}
+
+.font-playfair { font-family: 'Playfair Display', serif; }
+
+/* Lithos Hero Animations */
+@keyframes heroReveal { 0%{opacity:0;transform:translateY(28px);filter:blur(12px)} 100%{opacity:1;transform:translateY(0);filter:blur(0)} }
+@keyframes heroFadeUp { 0%{opacity:0;transform:translateY(20px)} 100%{opacity:1;transform:translateY(0)} }
+@keyframes heroZoom { 0%{transform:scale(1.12)} 100%{transform:scale(1)} }
+
+.hero-anim { opacity: 0; animation-fill-mode: forwards; animation-timing-function: cubic-bezier(0.16, 1, 0.3, 1); }
+.hero-reveal { animation-name: heroReveal; animation-duration: 1.1s; }
+.hero-fade { animation-name: heroFadeUp; animation-duration: 1s; }
+.hero-zoom { animation: heroZoom 1.8s cubic-bezier(0.16, 1, 0.3, 1) forwards; }
+
+@media (prefers-reduced-motion: reduce){ .hero-anim, .hero-zoom { animation: none; opacity: 1; } }
+
+/* Lithos Fixed Top Navbar */
+.lithos-nav {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  z-index: 100;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 18px 32px;
+  background: linear-gradient(180deg, rgba(0,0,0,0.7) 0%, rgba(0,0,0,0) 100%);
+}
+
+.nav-brand {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  text-decoration: none;
+}
+
+.nav-brand-icon {
+  width: 28px;
+  height: 28px;
+  background: var(--accent);
+  border-radius: 8px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  box-shadow: 0 0 16px rgba(255,102,0,0.5);
+}
+
+.nav-brand-title {
+  color: #ffffff;
+  font-size: 24px;
+  font-style: italic;
+  font-weight: 500;
+}
+
+/* Translucent Grey Glass Pill Badge (Gambar 3 Style) */
+.glass-pill-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 10px;
+  background: rgba(35, 40, 50, 0.65);
+  backdrop-filter: blur(16px);
+  -webkit-backdrop-filter: blur(16px);
+  border: 1px solid rgba(255, 255, 255, 0.18);
+  border-radius: 999px;
+  padding: 8px 18px;
+  color: rgba(255, 255, 255, 0.95);
+  font-size: 13px;
+  font-weight: 600;
+  letter-spacing: 0.02em;
+  box-shadow: 0 4px 20px rgba(0,0,0,0.3);
+}
+
+.badge-full { display: inline; }
+.badge-short { display: none; }
+
+.pulse-dot {
+  width: 9px;
+  height: 9px;
+  background: #ff6600;
+  border-radius: 50%;
+  box-shadow: 0 0 12px #ff6600;
+  animation: pulseSlow 2s infinite;
+}
+
+/* STATE 1: Lithos Hero Section */
+#state-hero {
+  display: block;
+  position: relative;
+  width: 100%;
+  height: 100vh;
+  height: 100dvh;
+  overflow: hidden;
+  background: #000000;
+}
+
+/* Layer 1: Base Dark Drone Image (HD) */
+.hero-bg-base {
+  position: absolute;
+  inset: 0;
+  z-index: 10;
+  background-image: url('/static/drone_dark.jpg');
+  background-position: center;
+  background-size: cover;
+  background-repeat: no-repeat;
+}
+
+/* Layer 2: Reveal Bright Drone Image (HD with Spotlight Mask) */
+.hero-bg-reveal {
+  position: absolute;
+  inset: 0;
+  z-index: 30;
+  background-image: url('/static/drone_bright.jpg');
+  background-position: center;
+  background-size: cover;
+  background-repeat: no-repeat;
+  pointer-events: none;
+  will-change: mask-image, -webkit-mask-image;
+}
+
+/* Layer 3: Overlay Content Center */
+.hero-content-heading {
+  position: absolute;
+  top: 14%;
+  left: 0;
+  right: 0;
+  z-index: 50;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  text-align: center;
+  padding: 0 20px;
+  pointer-events: none;
+}
+
+.hero-heading-h1 {
+  color: #ffffff;
+  line-height: 0.95;
+  margin: 0;
+}
+
+.hero-title-line1 {
+  display: block;
+  font-family: 'Playfair Display', serif;
+  font-style: italic;
+  font-weight: 400;
+  font-size: clamp(42px, 7.5vw, 92px);
+  letter-spacing: -0.05em;
+  color: #ffffff;
+  text-shadow: 0 4px 20px rgba(0,0,0,0.7);
+}
+
+.hero-title-line2 {
+  display: block;
+  font-weight: 400;
+  font-size: clamp(42px, 7.5vw, 92px);
+  letter-spacing: -0.08em;
+  margin-top: -4px;
+  color: rgba(255,255,255,0.95);
+  text-shadow: 0 4px 24px rgba(0,0,0,0.8);
+}
+
+/* Gambar 3 Translucent Grey Glass Action Button (Centered right under "seconds in time") */
+.btn-pill-lapor {
+  margin-top: 28px;
+  background: rgba(30, 35, 46, 0.72);
+  backdrop-filter: blur(20px);
+  -webkit-backdrop-filter: blur(20px);
+  border: 1px solid rgba(255, 255, 255, 0.22);
+  border-radius: 999px;
+  padding: 14px 32px;
+  color: #ffffff;
+  font-size: 14px;
+  font-weight: 600;
+  letter-spacing: 0.03em;
+  cursor: pointer;
+  pointer-events: auto;
+  display: inline-flex;
+  align-items: center;
+  gap: 12px;
+  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.5), inset 0 1px 0 rgba(255,255,255,0.2);
+  transition: all 0.25s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+.btn-pill-lapor:hover {
+  background: rgba(45, 52, 68, 0.85);
+  border-color: rgba(255, 255, 255, 0.4);
+  transform: scale(1.04);
+  box-shadow: 0 12px 36px rgba(0, 0, 0, 0.6), 0 0 20px rgba(255,102,0,0.3);
+}
+
+.btn-pill-lapor:active {
+  transform: scale(0.96);
+}
+
+/* Bottom Horizontal Text Layout (Left & Right Aligned Horizontally at bottom: 40px) */
+.hero-bottom-left {
+  position: absolute;
+  bottom: 40px;
+  left: 32px;
+  z-index: 50;
+  max-width: 320px;
+  display: none;
+}
+
+.hero-bottom-right {
+  position: absolute;
+  bottom: 40px;
+  right: 32px;
+  z-index: 50;
+  max-width: 320px;
+  display: none;
+}
+
+@media (min-width: 640px) {
+  .hero-bottom-left, .hero-bottom-right { display: block; }
+}
+
+@media (min-width: 880px) {
+  .hero-bottom-left { left: 48px; }
+  .hero-bottom-right { right: 48px; }
+}
+
+.hero-text-bottom {
+  font-size: 13.5px;
+  color: rgba(255, 255, 255, 0.82);
+  line-height: 1.65;
+  text-shadow: 0 2px 10px rgba(0,0,0,0.9);
+}
+
+/* STATE 2: Maxim Light / Dark Slate Map Form */
+#state-form { 
+  display: none; 
+  position: relative; 
+  height: 100vh;
+  height: 100dvh; 
+  width: 100%; 
+  flex-direction: column; 
+  background: #0b0f17; 
+  overflow: hidden; 
+}
+
+#maximMap { width: 100%; height: 100%; z-index: 1; }
+
+.maxim-center-pin-wrapper { 
+  position: absolute; 
+  top: 50%; 
+  left: 50%; 
+  transform: translate(-50%, -100%); 
+  z-index: 800; 
+  pointer-events: none; 
+  display: flex; 
+  flex-direction: column; 
+  align-items: center; 
+  animation: bouncePin 0.4s ease-out; 
+}
+
+.pin-head { width: 24px; height: 24px; background: #ff6600; border: 3px solid #fff; border-radius: 50%; box-shadow: 0 4px 12px rgba(0,0,0,0.5); }
+.pin-tail { width: 2px; height: 16px; background: #fff; box-shadow: 0 2px 4px rgba(0,0,0,0.3); }
+.pin-shadow { width: 8px; height: 4px; background: rgba(0,0,0,0.5); border-radius: 50%; margin-top: -2px; }
+
+.back-btn { 
+  position: absolute;
+  top: 20px;
+  left: 20px;
+  z-index: 950;
+  width: 46px; 
+  height: 46px; 
+  min-width: 46px; 
+  border-radius: 50%; 
+  background: rgba(20, 26, 38, 0.85); 
+  backdrop-filter: blur(16px);
+  -webkit-backdrop-filter: blur(16px);
+  border: 1px solid rgba(255, 255, 255, 0.2); 
+  box-shadow: 0 8px 24px rgba(0,0,0,0.4); 
+  display: flex; 
+  align-items: center; 
+  justify-content: center; 
+  cursor: pointer; 
+  color: #fff;
+  transition: all 0.2s; 
+}
+.back-btn:hover { background: rgba(35, 45, 65, 0.95); transform: scale(1.05); }
+
+.maxim-controls-stack { position: absolute; right: 20px; bottom: 280px; z-index: 900; display: flex; flex-direction: column; gap: 10px; }
+.ctrl-btn { 
+  width: 46px; 
+  height: 46px; 
+  border-radius: 50%; 
+  background: rgba(20, 26, 38, 0.85); 
+  backdrop-filter: blur(16px);
+  -webkit-backdrop-filter: blur(16px);
+  border: 1px solid rgba(255, 255, 255, 0.2); 
+  box-shadow: 0 8px 24px rgba(0,0,0,0.4); 
+  display: flex; 
+  align-items: center; 
+  justify-content: center; 
+  font-size: 20px; 
+  font-weight: 600; 
+  cursor: pointer; 
+  color: #fff; 
+  transition: all 0.2s;
+}
+.ctrl-btn:hover { background: rgba(35, 45, 65, 0.95); transform: scale(1.05); }
+
+/* Translucent Dark Glass Bottom Sheet Panel (Draggable Up & Down) */
+.maxim-bottom-sheet { 
+  position: absolute; 
+  bottom: 0; 
+  left: 0; 
+  right: 0; 
+  z-index: 950; 
+  background: rgba(13, 18, 28, 0.92); 
+  backdrop-filter: blur(24px);
+  -webkit-backdrop-filter: blur(24px);
+  border-top: 1px solid rgba(255, 255, 255, 0.18); 
+  border-radius: 26px 26px 0 0; 
+  padding: 12px 24px 28px; 
+  box-shadow: 0 -12px 40px rgba(0,0,0,0.6); 
+  display: flex; 
+  flex-direction: column; 
+  gap: 16px; 
+  transform: translateY(0);
+  transition: transform 0.35s cubic-bezier(0.16, 1, 0.3, 1);
+  will-change: transform;
+}
+
+.maxim-bottom-sheet.collapsed {
+  transform: translateY(calc(100% - 76px));
+}
+
+.drag-handle-wrap { 
+  padding: 6px 0 8px;
+  cursor: grab;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  user-select: none;
+  touch-action: none;
+}
+
+.drag-handle-wrap:active {
+  cursor: grabbing;
+}
+
+.drag-handle { 
+  width: 48px; 
+  height: 5px; 
+  background: rgba(255, 255, 255, 0.35); 
+  border-radius: 999px; 
+  transition: background 0.2s, transform 0.2s;
+}
+
+.drag-handle-wrap:hover .drag-handle { 
+  background: #ff6600; 
+  transform: scaleX(1.15); 
+}
+.sheet-header { display: flex; flex-direction: column; gap: 4px; }
+.sheet-label { font-size: 12.5px; font-weight: 600; color: #ff6600; display: flex; align-items: center; gap: 8px; text-transform: uppercase; letter-spacing: 0.04em; }
+.sheet-label::before { content: ''; width: 8px; height: 8px; background: #ff6600; border-radius: 50%; display: inline-block; box-shadow: 0 0 10px #ff6600; }
+#maximLocTitle { font-size: 17px; font-weight: 700; color: #ffffff; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+#maximLocAddress { font-size: 13.5px; color: rgba(255, 255, 255, 0.65); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+
+.input-row { display: flex; gap: 12px; }
+.input-row input { 
+  flex: 1; 
+  height: 46px; 
+  background: rgba(255, 255, 255, 0.07); 
+  border: 1px solid rgba(255, 255, 255, 0.18); 
+  border-radius: 14px; 
+  padding: 0 16px; 
+  font-family: inherit; 
+  font-size: 14px; 
+  color: #fff;
+  outline: none; 
+  transition: all 0.2s; 
+}
+.input-row input::placeholder { color: rgba(255, 255, 255, 0.45); }
+.input-row input:focus { border-color: #ff6600; background: rgba(255, 255, 255, 0.12); box-shadow: 0 0 12px rgba(255,102,0,0.25); }
+
+/* MOBILE RESPONSIVE FIXES (< 640px) */
+@media (max-width: 640px) {
+  .lithos-nav {
+    padding: 12px 16px;
+  }
+  .nav-brand-title {
+    font-size: 19px;
+  }
+  .glass-pill-badge {
+    font-size: 10.5px;
+    padding: 5px 12px;
+  }
+  .badge-full { display: none; }
+  .badge-short { display: inline; }
+
+  .hero-content-heading {
+    top: 18%;
+    padding: 0 16px;
+  }
+  .hero-title-line1 {
+    font-size: clamp(34px, 9.5vw, 54px);
+  }
+  .hero-title-line2 {
+    font-size: clamp(34px, 9.5vw, 54px);
+  }
+  .btn-pill-lapor {
+    margin-top: 20px;
+    padding: 12px 22px;
+    font-size: 13px;
+    width: calc(100% - 32px);
+    max-width: 320px;
+    justify-content: center;
+  }
+
+  .back-btn {
+    top: 14px;
+    left: 14px;
+    width: 42px;
+    height: 42px;
+    min-width: 42px;
+  }
+
+  .maxim-controls-stack {
+    right: 14px;
+    bottom: 250px;
+  }
+  .ctrl-btn {
+    width: 42px;
+    height: 42px;
+    font-size: 18px;
+  }
+
+  .maxim-bottom-sheet {
+    padding: 10px 16px 20px;
+    gap: 12px;
+    border-radius: 20px 20px 0 0;
+  }
+  #maximLocTitle {
+    font-size: 15px;
+  }
+  #maximLocAddress {
+    font-size: 12px;
+  }
+
+  /* Stack input fields vertically on mobile */
+  .input-row {
+    flex-direction: column;
+    gap: 10px;
+  }
+  .input-row input {
+    width: 100%;
+    height: 44px;
+    font-size: 13.5px;
+  }
+  .btn-pill-submit {
+    height: 46px;
+    font-size: 13.5px;
+  }
+}
+
+.status-line { font-size: 13.5px; color: rgba(255, 255, 255, 0.8); font-weight: 500; text-align: center; }
+.err-note { font-size: 13px; color: #f87171; background: rgba(239, 68, 68, 0.15); border: 1px solid rgba(239,68,68,0.3); padding: 10px 14px; border-radius: 12px; display: none; }
+.video-call-panel { display: none; text-align: center; margin-top: -4px; }
+.call-link { display: inline-flex; padding: 10px 18px; border-radius: 999px; background: rgba(255, 102, 0, 0.2); border: 1px solid rgba(255, 102, 0, 0.4); color: #ff8533; font-size: 13px; font-weight: 600; text-decoration: none; margin-top: 6px; }
+.call-link:hover { background: rgba(255, 102, 0, 0.35); color: #fff; }
+
+/* Gambar 3 Style Glass Pill Button for State 2 Submit */
+.btn-pill-submit {
+  width: 100%;
+  height: 50px;
+  background: rgba(35, 40, 52, 0.78);
+  backdrop-filter: blur(20px);
+  -webkit-backdrop-filter: blur(20px);
+  border: 1px solid rgba(255, 255, 255, 0.24);
+  border-radius: 999px;
+  color: #ffffff;
+  font-size: 14.5px;
+  font-weight: 600;
+  letter-spacing: 0.03em;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.4), inset 0 1px 0 rgba(255,255,255,0.2);
+  transition: all 0.25s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+.btn-pill-submit:hover {
+  background: rgba(50, 58, 75, 0.9);
+  border-color: rgba(255, 255, 255, 0.45);
+  transform: translateY(-1px);
+  box-shadow: 0 12px 32px rgba(0,0,0,0.5), 0 0 16px rgba(255,102,0,0.25);
+}
+
+.btn-pill-submit:disabled {
+  opacity: 0.65;
+  cursor: not-allowed;
+  transform: none;
+}
+
+/* Sent State: Translucent Green Glass Pill Badge */
+.btn-pill-submit.sent-success {
+  background: rgba(22, 163, 74, 0.35) !important;
+  border-color: rgba(34, 197, 94, 0.6) !important;
+  color: #4ade80 !important;
+  box-shadow: 0 8px 24px rgba(22, 163, 74, 0.3), inset 0 1px 0 rgba(255,255,255,0.3) !important;
+}
+
+/* Toast Notification */
+.toast { position: fixed; bottom: 40px; left: 50%; transform: translateX(-50%); background: rgba(15,23,42,0.95); border: 1px solid rgba(255,255,255,0.2); color: #fff; padding: 12px 24px; border-radius: 99px; font-size: 14px; font-weight: 500; z-index: 9999; display: none; box-shadow: 0 8px 24px rgba(0,0,0,0.4); }
+
+/* GPS Marker CSS */
+.user-gps-pulse-wrap { position: relative; width: 20px; height: 20px; }
+.user-gps-core { width: 12px; height: 12px; background: #ff6600; border: 2px solid #fff; border-radius: 50%; position: absolute; top: 4px; left: 4px; z-index: 2; box-shadow: 0 2px 4px rgba(0,0,0,0.4); }
+.user-gps-wave { width: 20px; height: 20px; background: rgba(255, 102, 0, 0.4); border-radius: 50%; position: absolute; top: 0; left: 0; z-index: 1; animation: gpsWave 1.5s infinite ease-out; }
+
+/* Keyframes */
+@keyframes pulseSlow { 0% { transform: scale(0.95); box-shadow: 0 0 0 0 rgba(255,102,0,0.7); } 70% { transform: scale(1); box-shadow: 0 0 0 6px rgba(255,102,0,0); } 100% { transform: scale(0.95); box-shadow: 0 0 0 0 rgba(255,102,0,0); } }
+@keyframes bouncePin { 0% { transform: translate(-50%, -120%); } 50% { transform: translate(-50%, -90%); } 100% { transform: translate(-50%, -100%); } }
+@keyframes gpsWave { 0% { transform: scale(0.8); opacity: 1; } 100% { transform: scale(2.5); opacity: 0; } }
+</style>
+</head>
+<body>
+
+<!-- Fixed Lithos Top Nav -->
+<header class="lithos-nav">
+  <a href="#" class="nav-brand">
+    <div class="nav-brand-icon">
+      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#ffffff" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+        <polygon points="12 2 2 7 12 12 22 7 12 2"></polygon>
+        <polyline points="2 17 12 22 22 17"></polyline>
+        <polyline points="2 12 12 17 22 12"></polyline>
+      </svg>
+    </div>
+    <span class="nav-brand-title font-playfair">RescueDrone</span>
+  </a>
+
+  <!-- Gambar 3 Style Glass Pill Badge -->
+  <div class="glass-pill-badge">
+    <span class="pulse-dot"></span>
+    <span class="badge-full">AIRBORNE EMERGENCY SYSTEM &bull; USAR</span>
+    <span class="badge-short">USAR &bull; EMERGENCY</span>
+  </div>
+</header>
+
+<!-- STATE 1: Lithos Hero Section with HD Spotlight Reveal -->
+<section id="state-hero">
+  <!-- Layer 1: Base Dark Drone Image (HD) -->
+  <div class="hero-bg-base hero-zoom"></div>
+
+  <!-- Layer 2: Reveal Bright Drone Image (HD Masked by Cursor Spotlight) -->
+  <div class="hero-bg-reveal" id="revealLayer"></div>
+
+  <!-- Layer 3: Hero Headline & Centered Action Button -->
+  <div class="hero-content-heading">
+    <h1 class="hero-heading-h1">
+      <span class="hero-title-line1 hero-anim hero-reveal" style="animation-delay: 0.25s;">Rescuing lives</span>
+      <span class="hero-title-line2 hero-anim hero-reveal" style="animation-delay: 0.42s;">seconds in time</span>
+    </h1>
+
+    <!-- Gambar 3 Translucent Grey Glass Pill Action Button (Centered below "seconds in time") -->
+    <button class="btn-pill-lapor hero-anim hero-fade" id="heroLaporBtn" style="animation-delay: 0.58s;">
+      <span class="pulse-dot"></span>
+      LAPOR KECELAKAAN SEKARANG
+    </button>
+  </div>
+
+  <!-- Bottom Left Paragraph (Bottom-aligned at bottom: 40px) -->
+  <div class="hero-bottom-left hero-anim hero-fade" style="animation-delay: 0.7s;">
+    <p class="hero-text-bottom">
+      Sistem tanggap darurat kecelakaan &amp; medis otonom berbasis drone. Mendahului kedatangan ambulans darat untuk pertolongan pertama di lokasi kejadian.
+    </p>
+  </div>
+
+  <!-- Bottom Right Paragraph (Bottom-aligned at bottom: 40px, horizontally aligned with bottom-left) -->
+  <div class="hero-bottom-right hero-anim hero-fade" style="animation-delay: 0.85s;">
+    <p class="hero-text-bottom">
+      Tentukan koordinat presisi via peta interaktif dan kirim sinyal darurat langsung ke armada drone SAR.
+    </p>
+  </div>
+</section>
+
+<!-- STATE 2: Maxim Dark Slate Map Form -->
+<section id="state-form">
+  <div id="maximMap"></div>
+  
+  <div class="maxim-center-pin-wrapper">
+    <div class="pin-head"></div>
+    <div class="pin-tail"></div>
+    <div class="pin-shadow"></div>
+  </div>
+
+  <button class="back-btn" id="maximBackBtn" title="Kembali ke Beranda">
+    <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="15 18 9 12 15 6"></polyline></svg>
+  </button>
+
+  <div class="maxim-controls-stack">
+    <button class="ctrl-btn" id="btnZoomIn" title="Zoom In">+</button>
+    <button class="ctrl-btn" id="btnZoomOut" title="Zoom Out">-</button>
+    <button class="ctrl-btn" id="btnGps" title="GPS Saya">
+      <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor"><polygon points="3 11 22 2 13 21 11 13 3 11"></polygon></svg>
+    </button>
+  </div>
+
+  <div class="maxim-bottom-sheet">
+    <div class="drag-handle-wrap" id="dragHandleWrap" title="Tarik atau Klik untuk Naik/Turunkan Panel">
+      <div class="drag-handle"></div>
+    </div>
+    <div class="sheet-header">
+      <div class="sheet-label">Penjemputan / Lokasi Kejadian</div>
+      <div id="maximLocTitle">Memuat lokasi...</div>
+      <div id="maximLocAddress">Geser peta untuk menentukan titik lokasi</div>
+    </div>
+    <div class="input-row">
+      <input type="text" id="reporterNameInput" placeholder="Nama Anda">
+      <input type="tel" id="whatsappInput" placeholder="08123456789 (WhatsApp)">
+    </div>
+    <div class="status-line" id="statusLine"></div>
+    <div class="err-note" id="errNote"></div>
+    <div class="video-call-panel" id="videoCallPanel"></div>
+
+    <!-- Gambar 3 Translucent Grey Glass Pill Button for State 2 Submit -->
+    <button class="btn-pill-submit" id="panicBtn">
+      <span class="pulse-dot"></span>
+      SELESAI — LAPOR KECELAKAAN
+    </button>
+  </div>
+</section>
+
+<div class="toast" id="toast"></div>
+
+<!-- Scripts -->
+<script src="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.js"></script>
+
+<script>
+// Toast notification helper
+function toast(msg){
+  const t = document.getElementById('toast');
+  if(!t) return;
+  t.textContent = msg; t.style.display = 'block';
+  setTimeout(()=> t.style.display='none', 4000);
+}
+
+// -------------------------------------------------------------
+// SPOTLIGHT CURSOR REVEAL MECHANIC (LITHOS SIGNATURE FEATURE)
+// -------------------------------------------------------------
+const SPOTLIGHT_R = 260; // Spotlight Radius in pixels
+const revealLayer = document.getElementById('revealLayer');
+const stateHero = document.getElementById('state-hero');
+
+let targetX = window.innerWidth / 2;
+let targetY = window.innerHeight / 2;
+let smoothX = targetX;
+let smoothY = targetY;
+
+// Track Mouse Movement
+window.addEventListener('mousemove', (e) => {
+  targetX = e.clientX;
+  targetY = e.clientY;
+});
+
+// Touch movement support for mobile
+window.addEventListener('touchmove', (e) => {
+  if (e.touches && e.touches[0]) {
+    targetX = e.touches[0].clientX;
+    targetY = e.touches[0].clientY;
+  }
+}, { passive: true });
+
+// Animation RAF Loop with Smooth Lerp
+function updateSpotlightMask() {
+  smoothX += (targetX - smoothX) * 0.12;
+  smoothY += (targetY - smoothY) * 0.12;
+
+  // Ultra-smooth CSS Radial Masking
+  const maskStyle = `radial-gradient(circle ${SPOTLIGHT_R}px at ${smoothX.toFixed(1)}px ${smoothY.toFixed(1)}px, rgba(0,0,0,1) 0%, rgba(0,0,0,1) 35%, rgba(0,0,0,0.75) 60%, rgba(0,0,0,0.4) 75%, rgba(0,0,0,0.12) 88%, rgba(0,0,0,0) 100%)`;
+  
+  if (revealLayer) {
+    revealLayer.style.webkitMaskImage = maskStyle;
+    revealLayer.style.maskImage = maskStyle;
+  }
+
+  requestAnimationFrame(updateSpotlightMask);
+}
+requestAnimationFrame(updateSpotlightMask);
+
+// -------------------------------------------------------------
+// STATE TRANSITION (HERO <-> MAP FORM)
+// -------------------------------------------------------------
+const heroLaporBtn = document.getElementById('heroLaporBtn');
+const maximBackBtn = document.getElementById('maximBackBtn');
+const stateHeroElem = document.getElementById('state-hero');
+const stateForm = document.getElementById('state-form');
+const lithosNav = document.querySelector('.lithos-nav');
+
+heroLaporBtn.addEventListener('click', () => {
+  stateHeroElem.style.display = 'none';
+  stateForm.style.display = 'flex';
+  if(lithosNav) lithosNav.style.display = 'none'; // Hide header on map state to avoid collision
+  initMaximMap();
+  setTimeout(() => { if(maximMapInstance) maximMapInstance.invalidateSize(); }, 120);
+});
+
+maximBackBtn.addEventListener('click', () => {
+  stateForm.style.display = 'none';
+  stateHeroElem.style.display = 'block';
+  if(lithosNav) lithosNav.style.display = 'flex'; // Show header on hero state
+});
+
+// -------------------------------------------------------------
+// MAXIM MAP & GEOLOCATION LOGIC (DARK CARTO TILES)
+// -------------------------------------------------------------
+let maximMapInstance = null;
+let userGpsLat = -7.9666, userGpsLng = 112.6326;
+let currentLocLat = userGpsLat, currentLocLng = userGpsLng;
+let userMarker = null;
+let geocodeTimer = null;
+
+function updateMaximLocationFromCoords(lat, lng) {
+  currentLocLat = lat; 
+  currentLocLng = lng;
+  document.getElementById('maximLocTitle').textContent = 'Mencari alamat...';
+  document.getElementById('maximLocAddress').textContent = `${lat.toFixed(5)}, ${lng.toFixed(5)}`;
+  
+  clearTimeout(geocodeTimer);
+  geocodeTimer = setTimeout(async () => {
+    try {
+      const res = await fetch(`https://nominatim.openstreetmap.org/reverse?format=json&lat=${lat}&lon=${lng}&zoom=18&addressdetails=1`);
+      const data = await res.json();
+      if(data && data.address) {
+        let title = data.address.road || data.address.neighbourhood || data.address.suburb || data.name || 'Lokasi Terpilih';
+        document.getElementById('maximLocTitle').textContent = title;
+        document.getElementById('maximLocAddress').textContent = data.display_name;
+      } else {
+        document.getElementById('maximLocTitle').textContent = 'Lokasi Terpilih';
+      }
+    } catch(e) {
+      document.getElementById('maximLocTitle').textContent = 'Koordinat Terdeteksi';
+    }
+  }, 400);
+}
+
+function initMaximMap() {
+  if (maximMapInstance) return;
+  
+  // CartoDB Dark Matter / Voyager Map Tiles for Seamless Dark Aesthetic
+  maximMapInstance = L.map('maximMap', { zoomControl: false, attributionControl: false }).setView([userGpsLat, userGpsLng], 16);
+  L.tileLayer('https://{s}.basemaps.cartocdn.com/rastertiles/voyager/{z}/{x}/{y}{r}.png').addTo(maximMapInstance);
+  
+  maximMapInstance.on('moveend', () => {
+    const center = maximMapInstance.getCenter();
+    updateMaximLocationFromCoords(center.lat, center.lng);
+  });
+
+  const customIcon = L.divIcon({
+    className: 'custom-gps-icon',
+    html: '<div class="user-gps-pulse-wrap"><div class="user-gps-core"></div><div class="user-gps-wave"></div></div>',
+    iconSize: [20, 20],
+    iconAnchor: [10, 10]
+  });
+
+  if (navigator.geolocation) {
+    navigator.geolocation.getCurrentPosition(pos => {
+      userGpsLat = pos.coords.latitude; 
+      userGpsLng = pos.coords.longitude;
+      maximMapInstance.flyTo([userGpsLat, userGpsLng], 16);
+      if(!userMarker) {
+        userMarker = L.marker([userGpsLat, userGpsLng], {icon: customIcon}).addTo(maximMapInstance);
+      } else {
+        userMarker.setLatLng([userGpsLat, userGpsLng]);
+      }
+    });
+    navigator.geolocation.watchPosition(pos => {
+      userGpsLat = pos.coords.latitude; 
+      userGpsLng = pos.coords.longitude;
+      if(userMarker) userMarker.setLatLng([userGpsLat, userGpsLng]);
+    });
+  } else {
+    updateMaximLocationFromCoords(userGpsLat, userGpsLng);
+  }
+}
+
+document.getElementById('btnZoomIn').addEventListener('click', () => { if(maximMapInstance) maximMapInstance.zoomIn(); });
+document.getElementById('btnZoomOut').addEventListener('click', () => { if(maximMapInstance) maximMapInstance.zoomOut(); });
+document.getElementById('btnGps').addEventListener('click', () => { if(maximMapInstance) maximMapInstance.flyTo([userGpsLat, userGpsLng], 16); });
+
+// -------------------------------------------------------------
+// DRAGGABLE BOTTOM SHEET MECHANIC (NAIK/TURUN PANEL)
+// -------------------------------------------------------------
+const bottomSheet = document.querySelector('.maxim-bottom-sheet');
+const dragHandleWrap = document.getElementById('dragHandleWrap');
+
+let isDraggingSheet = false;
+let startDragY = 0;
+let dragDeltaY = 0;
+let isSheetCollapsed = false;
+
+function getSheetCollapsedDistance() {
+  return (bottomSheet.offsetHeight || 320) - 76;
+}
+
+// Click / Tap on handle to toggle collapsed/expanded
+dragHandleWrap.addEventListener('click', (e) => {
+  if (Math.abs(dragDeltaY) < 6) {
+    isSheetCollapsed = !isSheetCollapsed;
+    bottomSheet.classList.toggle('collapsed', isSheetCollapsed);
+    bottomSheet.style.transform = '';
+  }
+});
+
+// Pointer events for smooth drag
+dragHandleWrap.addEventListener('pointerdown', (e) => {
+  isDraggingSheet = true;
+  startDragY = e.clientY;
+  dragDeltaY = 0;
+  bottomSheet.style.transition = 'none';
+  dragHandleWrap.setPointerCapture(e.pointerId);
+});
+
+dragHandleWrap.addEventListener('pointermove', (e) => {
+  if (!isDraggingSheet) return;
+  dragDeltaY = e.clientY - startDragY;
+  
+  const baseOffset = isSheetCollapsed ? getSheetCollapsedDistance() : 0;
+  let targetOffset = baseOffset + dragDeltaY;
+  const maxOffset = getSheetCollapsedDistance();
+
+  if (targetOffset < 0) targetOffset = targetOffset * 0.15; // rubberband
+  if (targetOffset > maxOffset) targetOffset = maxOffset + (targetOffset - maxOffset) * 0.15;
+
+  bottomSheet.style.transform = `translateY(${targetOffset}px)`;
+});
+
+function finishSheetDrag(e) {
+  if (!isDraggingSheet) return;
+  isDraggingSheet = false;
+  bottomSheet.style.transition = 'transform 0.35s cubic-bezier(0.16, 1, 0.3, 1)';
+
+  if (dragDeltaY > 40) {
+    isSheetCollapsed = true;
+  } else if (dragDeltaY < -40) {
+    isSheetCollapsed = false;
+  }
+
+  bottomSheet.classList.toggle('collapsed', isSheetCollapsed);
+  bottomSheet.style.transform = '';
+  dragDeltaY = 0;
+}
+
+dragHandleWrap.addEventListener('pointerup', finishSheetDrag);
+dragHandleWrap.addEventListener('pointercancel', finishSheetDrag);
+
+
+
+// Emergency Report Submission (Gambar 3 Translucent Glass Pill Button State)
+const panicBtn = document.getElementById('panicBtn');
+panicBtn.addEventListener('click', async () => {
+  const center = maximMapInstance ? maximMapInstance.getCenter() : { lat: currentLocLat, lng: currentLocLng };
+  const nameVal = document.getElementById('reporterNameInput').value.trim() || 'Pelapor Web';
+  const waVal = document.getElementById('whatsappInput').value.trim() || '';
+
+  panicBtn.disabled = true;
+  panicBtn.innerHTML = '<span class="pulse-dot"></span> MENGIRIM LAPORAN...';
+  document.getElementById('statusLine').textContent = 'Mengirim koordinat lokasi ke RescueDrone...';
+
+  try {
+    const form = new FormData();
+    form.append('lat', center.lat);
+    form.append('lng', center.lng);
+    form.append('reporter_name', nameVal);
+    if(waVal) form.append('whatsapp_contact', waVal);
+
+    const res = await fetch('/api/reports', { method: 'POST', body: form });
+    const data = await res.json();
+    if(!data.ok) throw new Error(data.error || 'Gagal mengirim');
+
+    document.getElementById('statusLine').innerHTML = '<b style="color:var(--success)">✓ LAPORAN BERHASIL TERKIRIM!</b> Tim SAR &amp; Drone segera diproses.';
+    
+    // Translucent Green Glass Pill Badge (Gambar 3 Style)
+    panicBtn.classList.add('sent-success');
+    panicBtn.innerHTML = '✓ LOKASI TERKIRIM';
+
+    const vPanel = document.getElementById('videoCallPanel');
+    vPanel.style.display = 'block';
+    vPanel.innerHTML = '<a class="call-link" href="https://meet.jit.si/rescuedrone-' + data.id + '" target="_blank" rel="noopener">▶ Video Call Dokter (Room #' + data.id + ')</a>';
+    toast('Laporan berhasil terkirim!');
+  } catch(err) {
+    panicBtn.disabled = false;
+    panicBtn.classList.remove('sent-success');
+    panicBtn.innerHTML = '<span class="pulse-dot"></span> SELESAI — LAPOR KECELAKAAN';
+    document.getElementById('errNote').textContent = 'Gagal: ' + err.message;
+    document.getElementById('errNote').style.display = 'block';
+  }
+});
+</script>
+</body>
+</html>

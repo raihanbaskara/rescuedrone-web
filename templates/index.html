@@ -1,0 +1,1190 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>RescueDrone - Dashboard Admin</title>
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.css" />
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500;600&family=Inter:wght@300;400;500;600;700&family=Playfair+Display:ital,wght@1,400;1,500;1,600;1,700&family=Space+Grotesk:wght@500;600;700&display=swap" rel="stylesheet">
+
+<style>
+  :root{
+    --bg: #0b0f17; 
+    --panel: rgba(15, 23, 42, 0.85); 
+    --panel-border: rgba(255, 255, 255, 0.12);
+    --panel-alt: rgba(30, 41, 59, 0.7);
+    --ink: #f8fafc; 
+    --ink-soft: #cbd5e1; 
+    --ink-faint: #94a3b8; 
+    --line: rgba(255, 255, 255, 0.12);
+    --accent: #ff6600; 
+    --accent-deep: #e05500; 
+    --accent-soft: rgba(255, 102, 0, 0.15);
+    --danger: #ef4444; 
+    --danger-soft: rgba(239, 68, 68, 0.15);
+    --success: #22c55e; 
+    --success-soft: rgba(34, 197, 94, 0.15);
+    --warn: #f97316; 
+    --warn-soft: rgba(249, 115, 22, 0.15);
+    --radius: 16px;
+    --gbar-h: 64px;
+  }
+
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  html, body { height: 100%; }
+  body { 
+    background: var(--bg); 
+    color: var(--ink); 
+    font-family: 'Inter', sans-serif; 
+    -webkit-font-smoothing: antialiased;
+    letter-spacing: -0.01em;
+  }
+  .mono { font-family: 'IBM Plex Mono', monospace; }
+  .font-playfair { font-family: 'Playfair Display', serif; }
+
+  /* ================= GLOBAL BAR + DRAWER ================= */
+  .gbar {
+    height: var(--gbar-h); 
+    display: flex; 
+    align-items: center; 
+    justify-content: space-between;
+    background: rgba(15, 23, 42, 0.9); 
+    backdrop-filter: blur(20px);
+    -webkit-backdrop-filter: blur(20px);
+    border-bottom: 1px solid var(--line); 
+    padding: 0 24px;
+    position: sticky; 
+    top: 0; 
+    z-index: 1000;
+  }
+
+  /* Gambar 1 Style Brand Logo in Header */
+  .brand { display: flex; align-items: center; gap: 12px; text-decoration: none; }
+  .brand-mark { 
+    width: 32px; height: 32px; border-radius: 9px; 
+    background: var(--accent); 
+    display: flex; align-items: center; justify-content: center;
+    box-shadow: 0 0 16px rgba(255,102,0,0.4);
+  }
+  .brand-mark svg { width: 18px; height: 18px; stroke: #fff; }
+  .brand-name { color: #ffffff; font-size: 24px; font-style: italic; font-weight: 500; }
+
+  .menu-btn { 
+    position: relative; width: 42px; height: 42px; border-radius: 50%; 
+    border: 1px solid var(--line); background: rgba(255,255,255,0.06); 
+    cursor: pointer; display: flex; align-items: center; justify-content: center;
+    color: #fff; transition: 0.2s;
+  }
+  .menu-btn:hover { background: rgba(255,255,255,0.12); border-color: rgba(255,255,255,0.25); }
+  .menu-btn svg { width: 20px; height: 20px; stroke: currentColor; fill: none; stroke-width: 2; }
+  .menu-badge { position: absolute; top: 8px; right: 9px; width: 8px; height: 8px; border-radius: 50%; background: var(--danger); display: none; }
+  .menu-badge.show { display: block; }
+
+  /* Drawer Sidebar Layout */
+  .drawer-overlay { display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.6); backdrop-filter: blur(4px); z-index: 1400; }
+  .drawer-overlay.show { display: block; }
+
+  .drawer {
+    position: fixed; top: 0; left: -300px; width: 280px; height: 100%; 
+    background: rgba(13, 18, 28, 0.95); 
+    backdrop-filter: blur(24px);
+    -webkit-backdrop-filter: blur(24px);
+    border-right: 1px solid var(--line);
+    box-shadow: 12px 0 32px rgba(0,0,0,0.6); 
+    z-index: 1500; 
+    transition: left 0.25s cubic-bezier(0.16, 1, 0.3, 1);
+    display: flex; 
+    flex-direction: column; 
+    padding: 24px 16px;
+  }
+  .drawer.open { left: 0; }
+  .drawer-head { font-family: 'Space Grotesk', sans-serif; font-size: 11px; letter-spacing: 1px; text-transform: uppercase; color: var(--ink-faint); padding: 8px 12px 14px; }
+  
+  .drawer-menu-list { display: flex; flex-direction: column; gap: 8px; }
+  
+  /* Gambar 3: Clean Drawer Items without graphic icons */
+  .drawer-item { 
+    display: flex; align-items: center; padding: 12px 18px; 
+    border-radius: 999px; cursor: pointer; font-size: 14px; color: var(--ink-soft); 
+    transition: all 0.2s; border: 1px solid transparent; font-weight: 500;
+  }
+  .drawer-item:hover { background: rgba(255,255,255,0.08); color: #fff; border-color: rgba(255,255,255,0.12); }
+  .drawer-item.active-view { background: rgba(255, 102, 0, 0.18); color: #ff8533; font-weight: 600; border-color: rgba(255, 102, 0, 0.4); }
+  
+  /* Sidebar Logout Button at Very Bottom (Clean Glass Pill without icon) */
+  .drawer-bottom-wrap {
+    margin-top: auto;
+    padding-top: 16px;
+    border-top: 1px solid var(--line);
+  }
+
+  .drawer-item.logout {
+    background: rgba(239, 68, 68, 0.18);
+    border: 1px solid rgba(239, 68, 68, 0.35);
+    color: #f87171;
+    font-weight: 600;
+    justify-content: center;
+    text-align: center;
+  }
+  .drawer-item.logout:hover {
+    background: rgba(239, 68, 68, 0.3);
+    color: #fff;
+    border-color: rgba(239, 68, 68, 0.6);
+  }
+
+  /* ================= VIEW BASE ================= */
+  .view { display: none; }
+  .view.active { display: block; }
+
+  /* ---------- DASHBOARD ---------- */
+  #view-dashboard.active { display: grid; }
+  #view-dashboard {
+    grid-template-columns: 1fr 340px; 
+    grid-template-rows: auto 1fr; 
+    height: calc(100vh - var(--gbar-h)); 
+    overflow: hidden;
+  }
+
+  /* Gambar 4 Style Glass Pill Status Strip */
+  .dstrip {
+    grid-column: 1 / -1; 
+    grid-row: 1; 
+    display: flex; 
+    align-items: center; 
+    justify-content: space-between; 
+    padding: 10px 24px; 
+    border-bottom: 1px solid var(--line); 
+    background: rgba(15, 23, 42, 0.85); 
+    backdrop-filter: blur(16px);
+    flex-wrap: wrap;
+    gap: 12px;
+  }
+
+  .dstrip-left { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; }
+  
+  /* Gambar 4 Glass Pill Status Badges */
+  .glass-status-pill {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    background: rgba(26, 35, 50, 0.75);
+    backdrop-filter: blur(12px);
+    -webkit-backdrop-filter: blur(12px);
+    border: 1px solid rgba(255, 255, 255, 0.18);
+    border-radius: 999px;
+    padding: 6px 16px;
+    font-family: 'IBM Plex Mono', monospace;
+    font-size: 11.5px;
+    font-weight: 600;
+    color: #ffffff;
+    letter-spacing: 0.03em;
+    box-shadow: 0 4px 16px rgba(0,0,0,0.3);
+  }
+
+  .glass-status-pill .label-key { color: rgba(255,255,255,0.7); }
+  .glass-status-pill .val-txt { color: #ffffff; font-weight: 600; }
+  
+  .dot { width: 8px; height: 8px; border-radius: 50%; background: var(--success); box-shadow: 0 0 8px var(--success); }
+  .dot.warn { background: var(--warn); box-shadow: 0 0 8px var(--warn); }
+  .dot.err { background: var(--danger); box-shadow: 0 0 8px var(--danger); }
+
+  /* Sleek Glass Info Banner for FC Connection Message */
+  .fc-info-banner {
+    display: none;
+    width: 100%;
+    background: rgba(239, 68, 68, 0.12);
+    border: 1px solid rgba(239, 68, 68, 0.3);
+    border-radius: 999px;
+    padding: 6px 18px;
+    font-size: 11.5px;
+    color: #fca5a5;
+    margin-top: 4px;
+    box-shadow: 0 4px 16px rgba(0,0,0,0.2);
+  }
+
+  .dstrip-right { display: flex; align-items: center; gap: 16px; }
+  .clock { font-family: 'IBM Plex Mono', monospace; font-size: 12px; color: var(--ink-soft); font-weight: 500; }
+
+  .dmain { grid-column: 1; grid-row: 2; position: relative; display: flex; flex-direction: column; }
+  #map { flex: 1; width: 100%; }
+
+  /* Gambar 2: Translucent Dark Grey Glass Card for Map Title */
+  .view-header {
+    position: absolute; top: 18px; left: 18px; z-index: 500; 
+    background: rgba(22, 28, 42, 0.88); 
+    backdrop-filter: blur(20px);
+    -webkit-backdrop-filter: blur(20px);
+    border: 1px solid rgba(255, 255, 255, 0.18);
+    border-radius: 18px; 
+    padding: 14px 20px; 
+    box-shadow: 0 10px 30px rgba(0,0,0,0.4); 
+    max-width: 360px;
+  }
+  .view-header h1 { font-family: 'Inter', sans-serif; font-weight: 700; font-size: 15px; margin: 0 0 4px; color: #fff; }
+  .view-header p { margin: 0; font-size: 12px; color: rgba(255,255,255,0.75); line-height: 1.5; }
+  
+  /* Gambar 2: Translucent Dark Grey Glass Card for Legend */
+  .legend { 
+    position: absolute; top: 18px; right: 18px; z-index: 500; 
+    background: rgba(22, 28, 42, 0.88); 
+    backdrop-filter: blur(20px);
+    -webkit-backdrop-filter: blur(20px);
+    border: 1px solid rgba(255, 255, 255, 0.18); 
+    border-radius: 18px; 
+    padding: 12px 18px; 
+    font-size: 12px; 
+    color: rgba(255, 255, 255, 0.85); 
+    box-shadow: 0 10px 30px rgba(0,0,0,0.4); 
+  }
+  .legend-row { display: flex; align-items: center; gap: 10px; margin: 6px 0; }
+  .legend-dot { width: 10px; height: 10px; border-radius: 50%; }
+
+  .toast { 
+    position: absolute; top: 18px; right: 18px; z-index: 900; 
+    background: rgba(15,23,42,0.95); border: 1px solid var(--line); color: #fff; 
+    padding: 12px 20px; border-radius: 999px; font-size: 13px; 
+    box-shadow: 0 8px 24px rgba(0,0,0,.4); opacity: 0; transform: translateY(-8px); 
+    transition: .25s; pointer-events: none; max-width: 320px; 
+  }
+  .toast.show { opacity: 1; transform: translateY(0); }
+
+  /* Gambar 2: Translucent Dark Grey Glass Telemetry Tape HUD Bar */
+  .hud { 
+    position: absolute; left: 18px; right: 18px; bottom: 18px; z-index: 500; 
+    background: rgba(22, 28, 42, 0.90); 
+    backdrop-filter: blur(24px);
+    -webkit-backdrop-filter: blur(24px);
+    border: 1px solid rgba(255, 255, 255, 0.18); 
+    border-radius: 18px; 
+    box-shadow: 0 12px 40px rgba(0,0,0,0.5); 
+    display: flex; align-items: stretch; overflow: hidden; flex-wrap: wrap; 
+  }
+  .hud-tape { flex: 1; min-width: 110px; padding: 12px 18px; border-right: 1px solid rgba(255, 255, 255, 0.12); position: relative; }
+  .hud-tape:last-child { border-right: none; }
+  .hud-tape .t-label { font-size: 10px; letter-spacing: 0.5px; text-transform: uppercase; color: rgba(255,255,255,0.6); font-weight: 600; }
+  .hud-tape .t-value { font-family: 'IBM Plex Mono', monospace; font-size: 18px; font-weight: 600; color: #fff; margin-top: 3px; }
+  .hud-tape .t-value .unit { font-size: 11px; color: rgba(255,255,255,0.6); font-weight: 400; margin-left: 2px; }
+  .hud-bar { position: absolute; left: 0; bottom: 0; height: 3px; background: var(--accent); transition: width 0.4s; }
+
+  /* Right Sidebar Panel */
+  .dside { 
+    grid-column: 2; grid-row: 2; 
+    background: rgba(15, 23, 42, 0.95); 
+    border-left: 1px solid var(--line); 
+    display: flex; flex-direction: column; overflow-y: auto; 
+  }
+  .side-section { padding: 16px 18px; border-bottom: 1px solid var(--line); }
+  .side-section h2 { font-family: 'Space Grotesk', sans-serif; font-size: 11px; letter-spacing: 0.8px; text-transform: uppercase; color: var(--ink-faint); margin: 0 0 12px; }
+  
+  .incident-list { display: flex; flex-direction: column; gap: 8px; max-height: 200px; overflow-y: auto; }
+  .incident-item { border: 1px solid var(--line); border-radius: 12px; padding: 10px 12px; cursor: pointer; font-size: 12px; transition: 0.15s; background: rgba(255,255,255,0.03); }
+  .incident-item:hover { border-color: var(--accent); background: rgba(255,102,0,0.08); }
+  .incident-item.selected { border-color: var(--accent); background: rgba(255,102,0,0.18); }
+  .incident-item .who { font-weight: 600; color: #fff; }
+  .incident-item .meta { color: var(--ink-soft); font-size: 11px; margin-top: 3px; }
+  .incident-empty { font-size: 12px; color: var(--ink-faint); padding: 8px 2px; text-align: center; }
+
+  .incident-card { background: rgba(239, 68, 68, 0.12); border: 1px solid rgba(239, 68, 68, 0.3); border-radius: var(--radius); padding: 14px 16px; }
+  .incident-card .tag { display: inline-block; background: var(--danger); color: #fff; font-size: 10px; font-weight: 700; letter-spacing: 0.5px; padding: 3px 10px; border-radius: 999px; margin-bottom: 8px; }
+  .incident-card .who { font-size: 14px; font-weight: 600; color: #fff; }
+  .incident-card .meta { font-size: 12px; color: var(--ink-soft); margin-top: 4px; line-height: 1.5; }
+  .incident-card .coords { font-family: 'IBM Plex Mono', monospace; font-size: 11.5px; color: #ff8533; margin-top: 6px; }
+
+  .route-card { background: rgba(255, 255, 255, 0.04); border: 1px solid var(--line); border-radius: 12px; padding: 12px 14px; margin-top: 10px; }
+  .route-row { display: flex; align-items: center; justify-content: space-between; font-size: 12px; color: var(--ink-soft); padding: 3px 0; }
+  .route-row b { font-family: 'IBM Plex Mono', monospace; font-size: 12px; color: #fff; font-weight: 600; }
+
+  /* Glass Pill Buttons for Admin Actions */
+  .btn { 
+    width: 100%; 
+    padding: 12px 20px; 
+    border-radius: 999px; 
+    border: 1px solid var(--line); 
+    cursor: pointer; 
+    font-family: 'Inter', sans-serif; 
+    font-weight: 600; 
+    font-size: 13.5px; 
+    display: flex; 
+    align-items: center; 
+    justify-content: center; 
+    gap: 10px;
+    background: rgba(35, 42, 56, 0.8);
+    backdrop-filter: blur(16px);
+    -webkit-backdrop-filter: blur(16px);
+    color: #ffffff;
+    box-shadow: 0 4px 16px rgba(0,0,0,0.3);
+    transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1);
+  }
+  .btn svg { width: 16px; height: 16px; }
+  
+  .btn-fly { background: var(--accent); border-color: rgba(255,102,0,0.5); color: #fff; margin-top: 12px; box-shadow: 0 6px 20px rgba(255,102,0,0.35); }
+  .btn-fly:hover { background: var(--accent-deep); transform: scale(1.02); box-shadow: 0 8px 28px rgba(255,102,0,0.5); }
+  .btn-fly:disabled { opacity: 0.5; cursor: not-allowed; transform: none; background: rgba(50,50,50,0.5); border-color: transparent; }
+
+  .btn-secondary { background: rgba(35, 42, 56, 0.8); border: 1px solid var(--line); color: #fff; margin-top: 10px; }
+  .btn-secondary:hover { background: rgba(50, 60, 80, 0.9); border-color: rgba(255,255,255,0.3); transform: scale(1.02); }
+
+  .btn-danger-glass { background: rgba(239, 68, 68, 0.2); border: 1px solid rgba(239, 68, 68, 0.4); color: #f87171; margin-top: 10px; }
+  .btn-danger-glass:hover { background: rgba(239, 68, 68, 0.35); color: #fff; transform: scale(1.02); }
+
+  .drone-status-row { display: flex; flex-direction: column; gap: 8px; margin-top: 8px; }
+  .drone-status-item { display: flex; align-items: center; justify-content: space-between; font-size: 12px; padding: 8px 12px; border: 1px solid var(--line); border-radius: 999px; background: rgba(255,255,255,0.03); }
+  .drone-status-item .lbl { font-weight: 600; color: #fff; }
+  .badge-status { font-size: 10px; font-weight: 600; padding: 3px 10px; border-radius: 999px; }
+  .badge-status.standby { background: var(--accent-soft); color: #ff8533; border: 1px solid rgba(255,102,0,0.3); }
+  .badge-status.aktif { background: var(--success-soft); color: #4ade80; border: 1px solid rgba(34,197,94,0.3); }
+  .badge-status.mati { background: rgba(255,255,255,0.1); color: var(--ink-faint); }
+
+  /* ---------- REKAP VIEW ---------- */
+  #view-rekap .wrap2 { max-width: 1100px; margin: 0 auto; padding: 32px 24px; }
+  #view-rekap h1 { font-family: 'Space Grotesk', sans-serif; font-size: 22px; color: #fff; margin-bottom: 4px; }
+  #view-rekap .sub { color: var(--ink-soft); font-size: 13px; margin-bottom: 20px; }
+  
+  table { width: 100%; border-collapse: collapse; background: rgba(15, 23, 42, 0.85); backdrop-filter: blur(16px); border: 1px solid var(--line); border-radius: var(--radius); overflow: hidden; box-shadow: 0 8px 32px rgba(0,0,0,0.4); }
+  th { text-align: left; font-size: 11px; letter-spacing: 0.5px; text-transform: uppercase; color: var(--ink-faint); padding: 14px 16px; border-bottom: 1px solid var(--line); background: rgba(30, 41, 59, 0.6); }
+  td { padding: 14px 16px; font-size: 13px; border-bottom: 1px solid var(--line); color: var(--ink); vertical-align: middle; }
+  tr:last-child td { border-bottom: none; }
+  .pill { padding: 4px 12px; border-radius: 999px; font-size: 11px; font-weight: 600; white-space: nowrap; }
+  .pill.baru { background: var(--warn-soft); color: #ff9d42; border: 1px solid rgba(249,115,22,0.3); }
+  .pill.selesai { background: var(--success-soft); color: #4ade80; border: 1px solid rgba(34,197,94,0.3); }
+  .src-tag { font-size: 10px; padding: 3px 10px; border-radius: 999px; background: var(--accent-soft); color: #ff8533; font-weight: 600; border: 1px solid rgba(255,102,0,0.3); }
+  .video-link { font-size: 12px; color: #ff8533; text-decoration: none; font-weight: 600; }
+  .action-btn-group { display: flex; align-items: center; gap: 8px; justify-content: center; }
+  .btn-table-edit {
+    padding: 6px 14px; border-radius: 999px; border: 1px solid rgba(255,255,255,0.2);
+    background: rgba(35, 42, 56, 0.8); backdrop-filter: blur(12px); color: #fff;
+    font-size: 11.5px; font-weight: 600; cursor: pointer; transition: all 0.2s;
+  }
+  .btn-table-edit:hover { background: rgba(255,102,0,0.25); border-color: rgba(255,102,0,0.5); color: #ff8533; }
+  .empty { padding: 40px; text-align: center; color: var(--ink-faint); font-size: 13px; }
+
+  /* Translucent Dark Glass Edit Modal */
+  .edit-modal-overlay {
+    display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.75); backdrop-filter: blur(8px);
+    z-index: 2000; align-items: center; justify-content: center; padding: 20px;
+  }
+  .edit-modal-overlay.show { display: flex; }
+  .edit-modal-card {
+    background: rgba(15, 23, 42, 0.95); backdrop-filter: blur(24px); border: 1px solid rgba(255,255,255,0.2);
+    border-radius: 24px; padding: 28px; width: 100%; max-width: 480px; box-shadow: 0 20px 50px rgba(0,0,0,0.6);
+  }
+  .edit-modal-card h2 { font-family: 'Space Grotesk', sans-serif; font-size: 18px; color: #fff; margin-bottom: 16px; }
+  .modal-field { margin-bottom: 14px; text-align: left; }
+  .modal-field label { display: block; font-size: 11.5px; font-weight: 600; color: rgba(255,255,255,0.75); margin-bottom: 6px; text-transform: uppercase; letter-spacing: 0.03em; }
+  .modal-field input, .modal-field select, .modal-field textarea {
+    width: 100%; padding: 10px 14px; background: rgba(255,255,255,0.07); border: 1px solid rgba(255,255,255,0.18);
+    border-radius: 12px; font-family: inherit; font-size: 13.5px; color: #fff; outline: none; transition: 0.2s;
+  }
+  .modal-field select option { background: #0f172a; color: #fff; }
+  .modal-field input:focus, .modal-field select:focus, .modal-field textarea:focus {
+    border-color: #ff6600; background: rgba(255,255,255,0.12);
+  }
+  .modal-btn-row { display: flex; gap: 10px; margin-top: 20px; }
+
+  /* ---------- TENTANG VIEW ---------- */
+  #view-tentang .wrap2 { max-width: 720px; margin: 0 auto; padding: 40px 24px; }
+  #view-tentang h1 { font-family: 'Space Grotesk', sans-serif; font-size: 24px; color: #fff; margin-bottom: 8px; }
+  #view-tentang > .view-inner > p.lead { color: var(--ink-soft); font-size: 14px; margin-bottom: 32px; line-height: 1.6; }
+  .step { display: flex; gap: 16px; margin-bottom: 24px; }
+  .step-num { flex-shrink: 0; width: 30px; height: 30px; border-radius: 50%; background: var(--accent-soft); border: 1px solid rgba(255,102,0,0.4); color: #ff8533; font-family: 'IBM Plex Mono', monospace; font-weight: 600; font-size: 13px; display: flex; align-items: center; justify-content: center; }
+  .step-body h3 { font-family: 'Space Grotesk', sans-serif; font-size: 15px; color: #fff; margin: 1px 0 6px; }
+  .step-body p { font-size: 13px; color: var(--ink-soft); margin: 0; line-height: 1.6; }
+  .about-card { background: rgba(15, 23, 42, 0.85); backdrop-filter: blur(16px); border: 1px solid var(--line); border-radius: var(--radius); padding: 22px 24px; margin-top: 32px; }
+  .about-card h2 { font-family: 'Space Grotesk', sans-serif; font-size: 15px; color: #fff; margin: 0 0 12px; }
+  .about-card ul { margin: 0; padding-left: 20px; font-size: 13px; color: var(--ink-soft); line-height: 1.8; }
+</style>
+</head>
+<body>
+
+  <!-- Top Global Bar with Gambar 1 Brand Logo & Wordmark -->
+  <div class="gbar">
+    <button class="menu-btn" id="menuBtn" title="Menu Admin">
+      <svg viewBox="0 0 24 24"><path d="M4 6h16M4 12h16M4 18h16"/></svg>
+      <span class="menu-badge" id="menuBadge"></span>
+    </button>
+    <a href="#" class="brand">
+      <div class="brand-mark">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#ffffff" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+          <polygon points="12 2 2 7 12 12 22 7 12 2"></polygon>
+          <polyline points="2 17 12 22 22 17"></polyline>
+          <polyline points="2 12 12 17 22 12"></polyline>
+        </svg>
+      </div>
+      <span class="brand-name font-playfair">RescueDrone</span>
+    </a>
+  </div>
+
+  <!-- Drawer Sidebar Overlay & Drawer (Gambar 3: Clean Drawer ohne graphic icons) -->
+  <div class="drawer-overlay" id="drawerOverlay"></div>
+  <nav class="drawer" id="drawer">
+    <div class="drawer-head">Menu Admin</div>
+    
+    <div class="drawer-menu-list">
+      <div class="drawer-item active-view" data-view="dashboard">
+        Dashboard
+      </div>
+      <div class="drawer-item" data-view="rekap">
+        Rekap Panggilan
+      </div>
+      <div class="drawer-item" data-view="tentang">
+        Tentang
+      </div>
+    </div>
+
+    <!-- Sidebar Logout Button at Very Bottom (Gambar 3: Clean Glass Pill Button) -->
+    <div class="drawer-bottom-wrap">
+      <div class="drawer-item logout" id="logoutItem">
+        Logout Admin
+      </div>
+    </div>
+  </nav>
+
+  <!-- ============ VIEW: DASHBOARD ============ -->
+  <div class="view" id="view-dashboard">
+    <!-- Gambar 4 Style Glass Pill Status Strip -->
+    <div class="dstrip">
+      <div class="dstrip-left">
+        <!-- Gambar 4 Glass Pill Badges -->
+        <div class="glass-status-pill">
+          <span class="dot" id="dotServer"></span>
+          <span class="label-key">SERVER:</span>
+          <span class="val-txt" id="serverStatus">CONNECTED</span>
+        </div>
+
+        <div class="glass-status-pill">
+          <span class="dot warn" id="dotFc"></span>
+          <span class="label-key">FC:</span>
+          <span class="val-txt" id="fcStatus">DISCONNECTED</span>
+        </div>
+
+        <div class="glass-status-pill">
+          <span class="dot warn"></span>
+          <span class="label-key">INSIDEN:</span>
+          <span class="val-txt" id="openCount">0 OPEN</span>
+        </div>
+
+        <!-- Sleek Glass Info Banner for FC Connection Message -->
+        <div class="fc-info-banner" id="fcInfoBanner">
+          Flight Controller Port serial COM10 tidak ditemukan. Port tersedia: []. Coba atur env FC_CONNECTION ke port yang benar atau ke udp:127.0.0.1:14550 untuk SITL.
+        </div>
+      </div>
+
+      <div class="dstrip-right">
+        <div class="clock" id="clock">--:--:--</div>
+      </div>
+    </div>
+
+    <div class="dmain">
+      <div id="map"></div>
+      
+      <!-- Gambar 2: Translucent Dark Grey Glass Card for Map Title -->
+      <div class="view-header">
+        <h1>Peta Insiden &amp; Flight Controller</h1>
+        <p>Insiden dari laporan warga, posisi drone diambil langsung dari MAVLink (Mission Planner).</p>
+      </div>
+
+      <!-- Gambar 2: Translucent Dark Grey Glass Card for Legend -->
+      <div class="legend">
+        <div class="legend-row"><span class="legend-dot" style="background:#ef4444"></span> Insiden belum dikunjungi</div>
+        <div class="legend-row"><span class="legend-dot" style="background:#94a3b8"></span> Insiden sudah dikunjungi</div>
+        <div class="legend-row"><span class="legend-dot" style="background:#ff6600"></span> Posisi drone (dari flight controller)</div>
+      </div>
+
+      <div class="toast" id="toast"></div>
+
+      <!-- Gambar 2: Translucent Dark Grey Glass Telemetry Tape HUD Bar -->
+      <div class="hud">
+        <div class="hud-tape"><div class="t-label">Ketinggian</div><div class="t-value" id="hud-alt">—<span class="unit">m</span></div><div class="hud-bar" id="bar-alt" style="width:0%"></div></div>
+        <div class="hud-tape"><div class="t-label">Kecepatan</div><div class="t-value" id="hud-speed">—<span class="unit">m/s</span></div><div class="hud-bar" id="bar-speed" style="width:0%"></div></div>
+        <div class="hud-tape"><div class="t-label">Baterai Drone</div><div class="t-value" id="hud-batt">—<span class="unit">%</span></div><div class="hud-bar" id="bar-batt" style="width:0%"></div></div>
+        <div class="hud-tape"><div class="t-label">Sinyal GPS</div><div class="t-value mono" style="font-size:14px;color:rgba(255,255,255,0.7)" id="hud-gps">—</div><div class="hud-bar" id="bar-gps" style="width:0%"></div></div>
+        <div class="hud-tape"><div class="t-label">Status Misi</div><div class="t-value" id="hud-mission" style="font-size:13px;">Menunggu</div><div class="hud-bar" id="bar-mission" style="width:0%"></div></div>
+      </div>
+    </div>
+
+    <!-- Right Sidebar Panel -->
+    <div class="dside">
+      <div class="side-section">
+        <h2>Insiden Terbuka</h2>
+        <div class="incident-list" id="incidentList"><div class="incident-empty">Memuat…</div></div>
+      </div>
+
+      <div class="side-section">
+        <h2>Insiden Dipilih</h2>
+        <div class="incident-card" id="incidentCard">
+          <span class="tag" id="incidentTag">BELUM ADA INSIDEN DIPILIH</span>
+          <div class="who" id="incidentWho">—</div>
+          <div class="meta" id="incidentMeta">Pilih salah satu insiden di atas.</div>
+          <div class="coords" id="incidentCoords"></div>
+          <div id="videoLinkWrap"></div>
+        </div>
+      </div>
+
+      <div class="side-section">
+        <h2>Video Call Pelapor</h2>
+        <div class="route-card" id="videoCallCard">
+          <div class="route-row"><span>Status</span><b id="videoCallStatus">Belum tersedia</b></div>
+          <div class="route-row"><span>Link</span><b id="videoCallLink">—</b></div>
+        </div>
+        <a class="btn btn-secondary" id="videoCallBtn" target="_blank" rel="noopener" href="#" style="display:none;">Buka Video Call Langsung</a>
+      </div>
+
+      <div class="side-section" style="border-bottom:none;">
+        <h2>Kirim Misi ke Flight Controller</h2>
+        <div style="margin-bottom:12px;">
+          <label style="display:block; font-size:11.5px; color:var(--ink-soft); margin-bottom:6px;">Ketinggian waypoint (meter)</label>
+          <input type="number" id="altInput" value="20" min="1" style="width:100%; background:rgba(255,255,255,0.06); border:1px solid var(--line); border-radius:12px; padding:10px 14px; color:#fff; font-family:inherit; outline:none;">
+        </div>
+
+        <div class="route-card" id="routeCard">
+          <div class="route-row"><span>Lokasi tujuan</span><b id="routeDist">—</b></div>
+          <div class="route-row"><span>Koneksi FC</span><b id="routeFc">—</b></div>
+        </div>
+
+        <!-- Glass Pill Buttons -->
+        <button class="btn btn-fly" id="flyBtn" disabled>
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M22 2 11 13M22 2l-7 20-4-9-9-4 20-7Z"/></svg>
+          Kirim Misi ke Flight Controller
+        </button>
+
+        <button class="btn btn-danger-glass" id="emergencyBtn">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 2 2 22h20L12 2Z"/><path d="M12 8v6M12 16h.01"/></svg>
+          Emergency RTL Drone Terdekat
+        </button>
+
+        <div id="emergencyDroneInfo" style="margin-top:8px; font-size:11.5px; color:var(--ink-soft);">Belum ada drone terpilih.</div>
+
+        <button class="btn btn-secondary" id="refreshFcBtn">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M23 4v6h-6M1 20v-6h6M3.51 9a9 9 0 0 1 14.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0 0 20.49 15"/></svg>
+          Segarkan Status Koneksi
+        </button>
+
+        <div class="drone-status-row" id="droneStatusRow"></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ============ VIEW: REKAP ============ -->
+  <div class="view" id="view-rekap">
+    <div class="wrap2">
+      <h1>Rekap Panggilan</h1>
+      <div class="sub">Semua insiden yang pernah masuk lewat halaman "Lapor Kecelakaan". Kamu bisa mengedit status dan data laporan di sini.</div>
+      <table>
+        <thead><tr><th>Waktu</th><th>Sumber</th><th>Pelapor</th><th>Lokasi</th><th>Kondisi Pasien</th><th>Status</th><th style="text-align:center;">Aksi</th></tr></thead>
+        <tbody id="tbody"></tbody>
+      </table>
+      <div class="empty" id="emptyNote" style="display:none;">Belum ada insiden yang masuk.</div>
+    </div>
+  </div>
+
+  <!-- Edit Incident Modal Overlay -->
+  <div class="edit-modal-overlay" id="editModalOverlay">
+    <div class="edit-modal-card">
+      <h2 id="editModalTitle">Edit Laporan #</h2>
+      
+      <div class="modal-field">
+        <label>Status Laporan</label>
+        <select id="editStatusInput">
+          <option value="belum">Belum Dikunjungi</option>
+          <option value="selesai">Sudah Dikunjungi / Selesai</option>
+        </select>
+      </div>
+
+      <div class="modal-field">
+        <label>Nama Pelapor</label>
+        <input type="text" id="editNameInput" placeholder="Nama Pelapor" />
+      </div>
+
+      <div class="modal-field">
+        <label>Kontak WhatsApp</label>
+        <input type="text" id="editWaInput" placeholder="08123456789" />
+      </div>
+
+      <div class="modal-field">
+        <label>Deskripsi / Kondisi Pasien</label>
+        <input type="text" id="editConditionInput" placeholder="Deskripsi kejadian" />
+      </div>
+
+      <div class="modal-btn-row">
+        <button class="btn btn-fly" id="saveEditBtn" style="margin-top:0; flex:1;">Simpan Perubahan</button>
+        <button class="btn btn-danger-glass" id="deleteIncidentBtn" style="margin-top:0;">Hapus</button>
+        <button class="btn btn-secondary" id="closeEditModalBtn" style="margin-top:0;">Batal</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- ============ VIEW: TENTANG ============ -->
+  <div class="view" id="view-tentang">
+    <div class="wrap2 view-inner">
+      <h1>Tentang RescueDrone</h1>
+      <p class="lead">RescueDrone menghubungkan pelapor kecelakaan di lapangan dengan tim medis lewat drone —
+      supaya bantuan pertama dan arahan dokter bisa sampai lebih cepat daripada ambulans darat. Dashboard ini
+      terhubung langsung ke flight controller sungguhan lewat MAVLink, dan bisa dipantau bersamaan di Mission Planner.</p>
+
+      <div class="step"><div class="step-num">1</div><div class="step-body">
+        <h3>Pelapor mengirim lokasi</h3>
+        <p>Lewat halaman "Lapor Kecelakaan" — sekali tekan, lokasi GPS otomatis terkirim ke dashboard admin.</p>
+      </div></div>
+      <div class="step"><div class="step-num">2</div><div class="step-body">
+        <h3>Admin memilih insiden &amp; mengirim misi</h3>
+        <p>Dashboard menampilkan insiden yang masuk di peta. Admin menekan "Kirim Misi ke Flight Controller" untuk meng-upload misi takeoff-waypoint-landing ke drone.</p>
+      </div></div>
+      <div class="step"><div class="step-num">3</div><div class="step-body">
+        <h3>Misi berjalan lewat Mission Planner / ArduPilot</h3>
+        <p>Misi yang di-upload langsung terlihat di Mission Planner. Drone tidak di-arm otomatis — operator tetap mengaktifkan mode AUTO/menerbangkan sesuai prosedur keselamatan.</p>
+      </div></div>
+      <div class="step"><div class="step-num">4</div><div class="step-body">
+        <h3>Insiden tercatat sampai selesai</h3>
+        <p>Setiap insiden tercatat di "Rekap Panggilan", termasuk status sudah dikunjungi atau belum.</p>
+      </div></div>
+
+      <div class="about-card">
+        <h2>Rencana pengembangan</h2>
+        <ul>
+          <li>Live streaming kamera drone yang tersambung ke dokter</li>
+          <li>Autentikasi admin yang lebih kuat</li>
+          <li>Geofence &amp; validasi area terbang sebelum misi dikirim ke flight controller</li>
+        </ul>
+      </div>
+    </div>
+  </div>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.js"></script>
+<script>
+  const CONFIG = { API_BASE_URL: '' };
+
+  /* ================= NAV / DRAWER (ADMIN ONLY) ================= */
+  let currentView = 'dashboard';
+
+  function goTo(view){ renderView(view); }
+
+  function renderView(view){
+    currentView = view;
+    document.querySelectorAll('.view').forEach(v=>v.classList.remove('active'));
+    const el = document.getElementById('view-'+view);
+    if(el) el.classList.add('active');
+    document.querySelectorAll('.drawer-item[data-view]').forEach(el=>{
+      el.classList.toggle('active-view', el.dataset.view === view);
+    });
+    closeDrawer();
+    window.scrollTo(0,0);
+
+    stopTelemetryPolling();
+    if(view === 'dashboard'){
+      if(!mapInitialized){ initMap(); mapInitialized = true; }
+      setTimeout(()=>{ if(map) map.invalidateSize(); }, 60);
+      refreshFcStatus();
+      startTelemetryPolling();
+    }
+    if(view === 'rekap'){ loadRekap(); }
+  }
+
+  document.getElementById('menuBtn').addEventListener('click', ()=>{
+    document.getElementById('drawer').classList.toggle('open');
+    document.getElementById('drawerOverlay').classList.toggle('show');
+  });
+  function closeDrawer(){
+    document.getElementById('drawer').classList.remove('open');
+    document.getElementById('drawerOverlay').classList.remove('show');
+  }
+  document.getElementById('drawerOverlay').addEventListener('click', closeDrawer);
+  document.querySelectorAll('.drawer-item[data-view]').forEach(el=>{
+    el.addEventListener('click', ()=> goTo(el.dataset.view));
+  });
+  document.getElementById('logoutItem').addEventListener('click', ()=>{
+    window.location.href = '/admin/logout';
+  });
+
+  /* ================= DASHBOARD ================= */
+  function tick(){
+    const now = new Date();
+    const el = document.getElementById('clock');
+    if(el) el.textContent = now.toLocaleTimeString('id-ID',{hour12:false});
+  }
+  tick(); setInterval(tick,1000);
+
+  function toast(msg){
+    const t = document.getElementById('toast');
+    if(!t) return;
+    t.textContent = msg; t.classList.add('show');
+    setTimeout(()=>t.classList.remove('show'), 3200);
+  }
+
+  function incidentDivIcon(visited){
+    const color = visited ? '#94a3b8' : '#ef4444';
+    return L.divIcon({
+      html:`<div style="width:22px;height:22px;border-radius:50%;background:${color};box-shadow:0 0 0 5px ${color}33;display:flex;align-items:center;justify-content:center;">
+              <svg viewBox="0 0 24 24" width="12" height="12" fill="#fff"><path d="M12 2 2 22h20L12 2Z"/></svg></div>`,
+      className:'', iconSize:[22,22]
+    });
+  }
+
+  function droneDivIcon(status, isSelected){
+    const color = status === 'active' ? '#ff6600' : status === 'standby' ? '#22c55e' : '#f97316';
+    const outline = isSelected ? '3px solid #ef4444' : '0px solid transparent';
+    return L.divIcon({
+      html:`<div style="width:28px;height:28px;border-radius:50%;background:${color};box-shadow:0 0 0 5px ${color}33;display:flex;align-items:center;justify-content:center;border:${outline};">
+              <svg viewBox="0 0 24 24" width="14" height="14" fill="#fff"><path d="M12 2 2 22h20L12 2Z"/></svg></div>`,
+      className:'', iconSize:[28,28]
+    });
+  }
+
+  let map = null;
+  let mapInitialized = false;
+  let incidents = [];
+  let incidentMarkers = {};
+  let selectedIncidentId = null;
+  let droneMarker = null;
+  let telemetryTimer = null;
+  let sendingMission = false;
+  let droneFleet = [];
+  let droneMarkers = {};
+  let selectedDroneId = null;
+  let editingIncidentId = null;
+
+  function initMap(){
+    map = L.map('map', {zoomControl:false}).setView([-7.9666, 112.6326], 12);
+    L.tileLayer('https://{s}.basemaps.cartocdn.com/rastertiles/voyager/{z}/{x}/{y}{r}.png',{ attribution:'&copy; OpenStreetMap &copy; CARTO', maxZoom:19 }).addTo(map);
+    L.control.zoom({position:'bottomright'}).addTo(map);
+
+    map.on('click', ()=>{
+      selectedIncidentId = null;
+      refreshIncidentMarkers();
+      renderIncidentCard(null);
+      renderIncidentList();
+    });
+    pollIncidents();
+  }
+
+  async function pollIncidents(){
+    try{
+      const res = await fetch(CONFIG.API_BASE_URL + '/api/incidents');
+      const data = await res.json();
+      const isNew = data.length > incidents.length;
+      incidents = data;
+      
+      const openCount = incidents.filter(i => i.status !== 'selesai').length;
+      document.getElementById('openCount').textContent = openCount + ' OPEN';
+      
+      refreshIncidentMarkers();
+      renderIncidentList();
+
+      if(isNew && currentView === 'dashboard') {
+        toast('Insiden baru diterima');
+        showAutoVideoCallPanel();
+      }
+
+      if(selectedIncidentId){
+        const stillThere = incidents.find(i=>i.id===selectedIncidentId);
+        if(stillThere) selectIncident(selectedIncidentId);
+      } else if(incidents.filter(i=>i.status!=='selesai').length > 0){
+        selectIncident(incidents.filter(i=>i.status!=='selesai')[0].id);
+      }
+    }catch(err){ /* silent */ }
+  }
+  pollIncidents();
+  setInterval(pollIncidents, 5000);
+
+  /* ---- Render Open / Recent Incidents List ---- */
+  function renderIncidentList(){
+    const listEl = document.getElementById('incidentList');
+    if(!listEl) return;
+    
+    if(!incidents || incidents.length === 0){
+      listEl.innerHTML = '<div class="incident-empty">Belum ada insiden terdaftar.</div>';
+      return;
+    }
+
+    listEl.innerHTML = '';
+    incidents.forEach(inc => {
+      const item = document.createElement('div');
+      const isSel = inc.id === selectedIncidentId;
+      item.className = 'incident-item' + (isSel ? ' selected' : '');
+      const statusBadge = inc.status === 'selesai' 
+        ? '<span style="color:var(--success); font-weight:600; font-size:10px;">✓ DIKUNJUNGI</span>' 
+        : '<span style="color:var(--danger); font-weight:600; font-size:10px;">• BELUM DIKUNJUNGI</span>';
+      
+      item.innerHTML = `
+        <div style="display:flex; justify-content:space-between; align-items:center;">
+          <div class="who">Laporan #${inc.id} — ${inc.reporter_name || 'Warga'}</div>
+          ${statusBadge}
+        </div>
+        <div class="meta">${inc.created_at || 'Baru saja'} • ${inc.latitude.toFixed(4)}, ${inc.longitude.toFixed(4)}</div>
+      `;
+
+      item.onclick = () => selectIncident(inc.id);
+      listEl.appendChild(item);
+    });
+  }
+
+  /* ---- Status koneksi flight controller (nyata, via /api/status) ---- */
+  async function refreshFcStatus(){
+    try{
+      const res = await fetch(CONFIG.API_BASE_URL + '/api/status');
+      const data = await res.json();
+      const dot = document.getElementById('dotFc');
+      const val = document.getElementById('fcStatus');
+      const routeFc = document.getElementById('routeFc');
+      const infoBanner = document.getElementById('fcInfoBanner');
+
+      if(data.ok && data.connected){
+        dot.classList.remove('warn','err');
+        val.textContent = 'CONNECTED';
+        if(routeFc) routeFc.textContent = 'CONNECTED';
+        if(infoBanner) infoBanner.style.display = 'none';
+        document.getElementById('flyBtn').disabled = !selectedIncidentId || (incidents.find(i=>i.id===selectedIncidentId)||{}).status==='selesai';
+      } else {
+        dot.classList.add('err'); dot.classList.remove('warn');
+        val.textContent = 'DISCONNECTED';
+        if(routeFc) routeFc.textContent = 'DISCONNECTED';
+        if(infoBanner) {
+          infoBanner.textContent = data.error || 'Flight Controller Port serial COM10 tidak ditemukan. Port tersedia: []. Coba atur env FC_CONNECTION ke port yang benar atau ke udp:127.0.0.1:14550 untuk SITL.';
+          infoBanner.style.display = 'block';
+        }
+        document.getElementById('flyBtn').disabled = true;
+      }
+    }catch(err){
+      const dot = document.getElementById('dotFc');
+      dot.classList.add('warn');
+      document.getElementById('fcStatus').textContent = 'NO RESPONSE';
+    }
+  }
+  document.getElementById('refreshFcBtn').addEventListener('click', refreshFcStatus);
+
+  document.getElementById('emergencyBtn').addEventListener('click', async ()=>{
+    const inc = incidents.find(i=>i.id===selectedIncidentId);
+    if(!inc) return;
+    const drone = pickNearestDrone(inc.latitude, inc.longitude);
+    if(!drone){ toast('Belum ada drone yang tersedia'); return; }
+    document.getElementById('emergencyDroneInfo').textContent = 'Drone terpilih: ' + drone.name + ' (' + drone.status + ')';
+    toast('Mengirim RTL ke drone terdekat: ' + drone.name);
+    try{
+      const res = await fetch(CONFIG.API_BASE_URL + '/api/send_waypoint', {
+        method:'POST', headers:{'Content-Type':'application/json'},
+        body: JSON.stringify({ lat: inc.latitude, lon: inc.longitude, alt: 5, incident_id: inc.id, emergency: true })
+      });
+      const data = await res.json();
+      if(data.ok){ toast('RTL dikirim ke ' + drone.name); }
+      else { toast('RTL gagal: ' + data.error); }
+    }catch(err){ toast('RTL gagal: ' + err.message); }
+  });
+
+  async function loadDroneFleet(){
+    try{
+      const res = await fetch(CONFIG.API_BASE_URL + '/api/drones');
+      const data = await res.json();
+      droneFleet = data;
+      renderDroneFleet();
+    }catch(err){ /* silent */ }
+  }
+
+  function renderDroneFleet(){
+    if(!map) return;
+    const seen = new Set();
+    droneFleet.forEach(drone => {
+      seen.add(drone.id);
+      const pos = [drone.lat, drone.lon];
+      const popupHtml = `<div class="popup-title">${drone.name}</div>
+        <div class="popup-row"><span>Status</span><b>${drone.status === 'active' ? 'Aktif' : drone.status === 'standby' ? 'Siap' : 'Isi baterai'}</b></div>
+        <div class="popup-row"><span>Baterai</span><b>${drone.battery_pct}%</b></div>
+        <div class="popup-row"><span>Waypoint</span><b>${drone.waypoint_label}</b></div>`;
+      const isSelected = selectedDroneId === drone.id;
+      if(droneMarkers[drone.id]){
+        droneMarkers[drone.id].setLatLng(pos).setIcon(droneDivIcon(drone.status, isSelected)).setPopupContent(popupHtml);
+      } else {
+        droneMarkers[drone.id] = L.marker(pos, {icon: droneDivIcon(drone.status, isSelected)}).addTo(map).bindPopup(popupHtml);
+      }
+      droneMarkers[drone.id].on('click', ()=>{ selectedDroneId = drone.id; renderDroneFleet(); });
+    });
+    Object.keys(droneMarkers).forEach(id => { if(!seen.has(id)) { map.removeLayer(droneMarkers[id]); delete droneMarkers[id]; } });
+  }
+
+  function showAutoVideoCallPanel(){
+    const latest = incidents[0];
+    if(!latest) return;
+    const room = 'rescuedrone-' + latest.id;
+    const url = 'https://meet.jit.si/' + room;
+    document.getElementById('videoCallStatus').textContent = 'Baru diterima';
+    document.getElementById('videoCallLink').textContent = room;
+    document.getElementById('videoCallBtn').href = url;
+    document.getElementById('videoCallBtn').style.display = 'inline-flex';
+  }
+
+  function refreshIncidentMarkers(){
+    if(!map) return;
+    const seen = new Set();
+    incidents.forEach(inc => {
+      seen.add(inc.id);
+      const pos = [inc.latitude, inc.longitude];
+      const visited = inc.status === 'selesai';
+      const isSel = inc.id === selectedIncidentId;
+      const popupHtml = `<div class="popup-title">Laporan #${inc.id}</div>
+        <div class="popup-row"><span>Pelapor</span><b>${inc.reporter_name||'Warga'}</b></div>
+        <div class="popup-row"><span>Status</span><b>${inc.status}</b></div>`;
+
+      if(incidentMarkers[inc.id]){
+        incidentMarkers[inc.id].setLatLng(pos).setIcon(incidentDivIcon(visited)).setPopupContent(popupHtml);
+      } else {
+        incidentMarkers[inc.id] = L.marker(pos, {icon: incidentDivIcon(visited)}).addTo(map).bindPopup(popupHtml);
+      }
+      incidentMarkers[inc.id].off('click');
+      incidentMarkers[inc.id].on('click', (e)=>{
+        L.DomEvent.stopPropagation(e);
+        selectIncident(inc.id);
+      });
+    });
+    Object.keys(incidentMarkers).forEach(id => {
+      if(!seen.has(parseInt(id))) { map.removeLayer(incidentMarkers[id]); delete incidentMarkers[id]; }
+    });
+  }
+
+  function selectIncident(id){
+    selectedIncidentId = id;
+    refreshIncidentMarkers();
+    renderIncidentList();
+    const inc = incidents.find(i=>i.id===id);
+    if(!inc) return;
+    renderIncidentCard(inc);
+    if(map) map.panTo([inc.latitude, inc.longitude]);
+  }
+
+  function renderIncidentCard(inc){
+    const card = document.getElementById('incidentCard');
+    const flyBtn = document.getElementById('flyBtn');
+    if(!inc){
+      card.innerHTML = `<span class="tag">BELUM ADA INSIDEN DIPILIH</span><div class="who">—</div><div class="meta">Pilih salah satu insiden di peta/list.</div>`;
+      flyBtn.disabled = true;
+      document.getElementById('routeDist').textContent = '—';
+      return;
+    }
+    const tag = inc.status === 'selesai' ? '<span class="tag" style="background:var(--success)">SUDAH DIKUNJUNGI</span>' : '<span class="tag">BELUM DIKUNJUNGI</span>';
+    const wa = inc.whatsapp_contact ? `<br>WA: <b>${inc.whatsapp_contact}</b>` : '';
+    const room = 'rescuedrone-' + inc.id;
+    const vlink = `<a class="video-link" href="https://meet.jit.si/${room}" target="_blank" rel="noopener">▶ Join Video Call Room #${inc.id}</a>`;
+    const editBtn = `<button class="btn-table-edit" onclick="openEditModal(${inc.id})" style="margin-top:8px;">✏️ Edit Data Laporan</button>`;
+
+    card.innerHTML = `${tag}<div class="who">Laporan #${inc.id} — ${inc.reporter_name||'Warga'}</div>
+      <div class="meta">Waktu: ${inc.created_at || 'Baru saja'}${wa}</div>
+      <div class="coords">${inc.latitude.toFixed(5)}, ${inc.longitude.toFixed(5)}</div>
+      <div style="display:flex; gap:10px; align-items:center; flex-wrap:wrap; margin-top:8px;">
+        ${vlink} ${editBtn}
+      </div>`;
+
+    document.getElementById('videoCallStatus').textContent = 'Aktif (Room #' + inc.id + ')';
+    document.getElementById('videoCallLink').textContent = room;
+    document.getElementById('videoCallBtn').href = 'https://meet.jit.si/' + room;
+    document.getElementById('videoCallBtn').style.display = 'inline-flex';
+
+    document.getElementById('routeDist').textContent = inc.latitude.toFixed(4) + ', ' + inc.longitude.toFixed(4);
+    refreshFcStatus();
+  }
+
+  function pickNearestDrone(lat, lon){
+    if(!droneFleet.length) return null;
+    let minD = Infinity;
+    let best = null;
+    droneFleet.forEach(d=>{
+      const dist = Math.hypot(d.lat - lat, d.lon - lon);
+      if(dist < minD){ minD = dist; best = d; }
+    });
+    return best;
+  }
+
+  /* ---- Fly Button / Kirim Misi ---- */
+  document.getElementById('flyBtn').addEventListener('click', async ()=>{
+    if(!selectedIncidentId) return;
+    const inc = incidents.find(i=>i.id===selectedIncidentId);
+    if(!inc) return;
+    const alt = parseFloat(document.getElementById('altInput').value) || 20;
+
+    const btn = document.getElementById('flyBtn');
+    btn.disabled = true;
+    btn.textContent = 'Mengunggah Misi…';
+
+    try{
+      const res = await fetch(CONFIG.API_BASE_URL + '/api/send_waypoint', {
+        method:'POST', headers:{'Content-Type':'application/json'},
+        body: JSON.stringify({ lat: inc.latitude, lon: inc.longitude, alt: alt, incident_id: inc.id })
+      });
+      const data = await res.json();
+      if(data.ok){
+        toast('Misi berhasil dikirim ke Flight Controller!');
+        inc.status = 'selesai';
+        refreshIncidentMarkers();
+        renderIncidentCard(inc);
+        renderIncidentList();
+      } else {
+        toast('Gagal kirim misi: ' + data.error);
+      }
+    }catch(err){
+      toast('Gagal terhubung: ' + err.message);
+    }
+    btn.disabled = false;
+    btn.innerHTML = `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M22 2 11 13M22 2l-7 20-4-9-9-4 20-7Z"/></svg> Kirim Misi ke Flight Controller`;
+  });
+
+  /* ---- Telemetry Polling ---- */
+  function startTelemetryPolling(){
+    if(telemetryTimer) clearInterval(telemetryTimer);
+    fetchTelemetry();
+    telemetryTimer = setInterval(fetchTelemetry, 2000);
+  }
+  function stopTelemetryPolling(){
+    if(telemetryTimer) clearInterval(telemetryTimer);
+  }
+
+  async function fetchTelemetry(){
+    try{
+      const res = await fetch(CONFIG.API_BASE_URL + '/api/telemetry');
+      const data = await res.json();
+      if(!data || !data.ok) return;
+
+      document.getElementById('hud-alt').innerHTML = (data.alt || 0).toFixed(1) + '<span class="unit">m</span>';
+      document.getElementById('hud-speed').innerHTML = (data.groundspeed || 0).toFixed(1) + '<span class="unit">m/s</span>';
+      document.getElementById('hud-batt').innerHTML = (data.battery || 0) + '<span class="unit">%</span>';
+      document.getElementById('hud-gps').textContent = (data.gps_fix ? '3D FIX (' + (data.satellites||0) + ' sat)' : 'NO FIX');
+      document.getElementById('hud-mission').textContent = data.flight_mode || 'STABILIZE';
+
+      document.getElementById('bar-alt').style.width = Math.min(100, ((data.alt||0)/50)*100) + '%';
+      document.getElementById('bar-speed').style.width = Math.min(100, ((data.groundspeed||0)/20)*100) + '%';
+      document.getElementById('bar-batt').style.width = (data.battery||0) + '%';
+
+      if(data.lat && data.lon && map){
+        const pos = [data.lat, data.lon];
+        if(!droneMarker){
+          droneMarker = L.marker(pos, {icon: droneDivIcon('active', false)}).addTo(map).bindPopup('<b>Armada Drone SAR</b><br>Tersambung via MAVLink');
+        } else {
+          droneMarker.setLatLng(pos);
+        }
+      }
+    }catch(err){ /* silent */ }
+  }
+
+  /* ---- Load & Render Rekap Table with Edit Action ---- */
+  async function loadRekap(){
+    try{
+      const res = await fetch(CONFIG.API_BASE_URL + '/api/incidents');
+      const data = await res.json();
+      incidents = data;
+      const tbody = document.getElementById('tbody');
+      const emptyNote = document.getElementById('emptyNote');
+      tbody.innerHTML = '';
+      if(!data || data.length === 0){
+        emptyNote.style.display = 'block';
+        return;
+      }
+      emptyNote.style.display = 'none';
+      data.forEach(inc => {
+        const tr = document.createElement('tr');
+        const statusPill = inc.status === 'selesai' 
+          ? '<span class="pill selesai">✓ Dikunjungi</span>' 
+          : '<span class="pill baru">Belum</span>';
+        const wa = inc.whatsapp_contact ? `<br><small class="mono">WA: ${inc.whatsapp_contact}</small>` : '';
+        const vlink = `https://meet.jit.si/rescuedrone-${inc.id}`;
+        
+        tr.innerHTML = `
+          <td class="mono" style="font-size:11px;">${inc.created_at || '—'}</td>
+          <td><span class="src-tag">${inc.source || 'Web Pelapor'}</span></td>
+          <td><b>${inc.reporter_name || 'Warga'}</b>${wa}</td>
+          <td class="mono" style="font-size:11px;">${inc.latitude.toFixed(5)}, ${inc.longitude.toFixed(5)}</td>
+          <td>${inc.condition_description || inc.patient_condition || 'Laporan Darurat'}</td>
+          <td>${statusPill}</td>
+          <td style="text-align:center;">
+            <div class="action-btn-group">
+              <a class="video-link" href="${vlink}" target="_blank" rel="noopener">▶ Video Call</a>
+              <button class="btn-table-edit" onclick="openEditModal(${inc.id})">✏️ Edit</button>
+            </div>
+          </td>
+        `;
+        tbody.appendChild(tr);
+      });
+    }catch(e){
+      console.error(e);
+    }
+  }
+
+  /* ---- Edit Modal Logic ---- */
+  function openEditModal(id){
+    const inc = incidents.find(i => i.id === id);
+    if(!inc) return;
+    editingIncidentId = id;
+    document.getElementById('editModalTitle').textContent = `Edit Laporan #${inc.id}`;
+    document.getElementById('editStatusInput').value = inc.status || 'belum';
+    document.getElementById('editNameInput').value = inc.reporter_name || '';
+    document.getElementById('editWaInput').value = inc.whatsapp_contact || '';
+    document.getElementById('editConditionInput').value = inc.condition_description || inc.patient_condition || '';
+    
+    document.getElementById('editModalOverlay').classList.add('show');
+  }
+
+  function closeEditModal(){
+    document.getElementById('editModalOverlay').classList.remove('show');
+    editingIncidentId = null;
+  }
+
+  document.getElementById('closeEditModalBtn').addEventListener('click', closeEditModal);
+
+  document.getElementById('saveEditBtn').addEventListener('click', async () => {
+    if(!editingIncidentId) return;
+    const newStatus = document.getElementById('editStatusInput').value;
+    const newName = document.getElementById('editNameInput').value.trim();
+    const newWa = document.getElementById('editWaInput').value.trim();
+    const newCondition = document.getElementById('editConditionInput').value.trim();
+
+    try{
+      const res = await fetch(`${CONFIG.API_BASE_URL}/api/incidents/${editingIncidentId}`, {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          status: newStatus,
+          reporter_name: newName,
+          whatsapp_contact: newWa,
+          patient_condition: newCondition
+        })
+      });
+      const data = await res.json();
+      if(data.ok){
+        toast('Data laporan berhasil diperbarui!');
+        closeEditModal();
+        pollIncidents();
+        if(currentView === 'rekap') loadRekap();
+      } else {
+        alert('Gagal update: ' + (data.error || 'Terjadi kesalahan'));
+      }
+    }catch(err){
+      alert('Gagal terhubung: ' + err.message);
+    }
+  });
+
+  document.getElementById('deleteIncidentBtn').addEventListener('click', async () => {
+    if(!editingIncidentId) return;
+    if(!confirm(`Yakin ingin menghapus Laporan #${editingIncidentId}?`)) return;
+
+    try{
+      const res = await fetch(`${CONFIG.API_BASE_URL}/api/incidents/${editingIncidentId}`, {
+        method: 'DELETE'
+      });
+      const data = await res.json();
+      if(data.ok){
+        toast('Laporan berhasil dihapus!');
+        closeEditModal();
+        selectedIncidentId = null;
+        pollIncidents();
+        if(currentView === 'rekap') loadRekap();
+      } else {
+        alert('Gagal hapus: ' + (data.error || 'Terjadi kesalahan'));
+      }
+    }catch(err){
+      alert('Gagal terhubung: ' + err.message);
+    }
+  });
+
+  /* ================= INIT ================= */
+  loadDroneFleet();
+  setInterval(loadDroneFleet, 8000);
+  renderView('dashboard');
+</script>
+</body>
+</html>
