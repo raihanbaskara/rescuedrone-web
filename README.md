@@ -105,14 +105,14 @@ Lalu set `FC_CONNECTION="udp:127.0.0.1:14550"` dan jalankan `app.py`.
 
 ## ⚠️ Catatan keselamatan (WAJIB dibaca sebelum dipakai ke drone sungguhan)
 
-- Aplikasi **tidak** meng-arm / take-off otomatis; misi hanya di-upload.
+- Untuk saat ini Aplikasi **tidak** meng-arm / take-off otomatis; misi hanya di-upload.
   Untuk menjalankan misi, gunakan Mission Planner atau aktifkan mode AUTO
   di flight controller.
 - **Selalu uji di simulator (SITL) dulu** sebelum mencoba pada drone fisik.
 - Tambahkan validasi geofence / batas area terbang di backend sebelum
   mengirim perintah ke flight controller.
-- Login admin di sini masih gerbang sederhana (untuk demo) — untuk
-  pemakaian sungguhan, tambahkan autentikasi yang lebih kuat (hash
+- Login admin di sini masih gerbang sederhana (untuk demo) untuk
+  pemakaian sungguhan, akan tambahkan autentikasi yang lebih kuat (hash
   password, sesi/JWT, HTTPS, dsb).
 - Sesuaikan `MAV_FRAME` dan mode terbang (GUIDED/AUTO/mission item) dengan
   firmware yang dipakai (ArduPilot vs PX4 memiliki sedikit perbedaan mode).
