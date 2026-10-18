@@ -849,7 +849,24 @@
 
   function initMap(){
     map = L.map('map', {zoomControl:false}).setView([-7.9666, 112.6326], 12);
-    L.tileLayer('https://{s}.basemaps.cartocdn.com/rastertiles/voyager/{z}/{x}/{y}{r}.png',{ attribution:'&copy; OpenStreetMap &copy; CARTO', maxZoom:19 }).addTo(map);
+    
+    const streetLayer = L.tileLayer('https://tile.openstreetmap.org/{z}/{x}/{y}.png', {
+      attribution: '&copy; OpenStreetMap contributors',
+      maxZoom: 19
+    });
+    
+    const satelliteLayer = L.tileLayer('https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}', {
+      attribution: 'Tiles &copy; Esri World Imagery',
+      maxZoom: 19
+    });
+
+    streetLayer.addTo(map);
+
+    L.control.layers({
+      "Peta Jalan": streetLayer,
+      "Satelit Udara": satelliteLayer
+    }, null, { position: 'bottomright' }).addTo(map);
+
     L.control.zoom({position:'bottomright'}).addTo(map);
 
     map.on('click', ()=>{

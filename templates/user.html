@@ -784,9 +784,12 @@ function updateMaximLocationFromCoords(lat, lng) {
 function initMaximMap() {
   if (maximMapInstance) return;
   
-  // CartoDB Dark Matter / Voyager Map Tiles for Seamless Dark Aesthetic
+  // OpenStreetMap Tile Layer (100% Free & No API Key Watermark)
   maximMapInstance = L.map('maximMap', { zoomControl: false, attributionControl: false }).setView([userGpsLat, userGpsLng], 16);
-  L.tileLayer('https://{s}.basemaps.cartocdn.com/rastertiles/voyager/{z}/{x}/{y}{r}.png').addTo(maximMapInstance);
+  L.tileLayer('https://tile.openstreetmap.org/{z}/{x}/{y}.png', {
+    maxZoom: 19,
+    attribution: '&copy; OpenStreetMap contributors'
+  }).addTo(maximMapInstance);
   
   maximMapInstance.on('moveend', () => {
     const center = maximMapInstance.getCenter();
