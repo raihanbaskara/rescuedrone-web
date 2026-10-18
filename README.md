@@ -102,18 +102,27 @@ flowchart TD
 
 ---
 
-## 🖼️ Galeri & Antarmuka Aplikasi
+## 🖼️ Galeri Visual & Desain Sistem
 
-> *Catatan: Simpan file screenshot kamu ke dalam folder `docs/screenshots/` sesuai nama file di bawah ini agar gambar otomatis muncul di GitHub.*
+| Visualisasi Wahana | Deskripsi Teknis |
+| :---: | :--- |
+| <img src="static/drone_dark.png" width="380" alt="RescueDrone Tactical Hexacopter" style="border-radius:8px;" /> | **RescueDrone Tactical Edition**: Desain aerodinamis serat karbon berkecepatan tinggi dengan payload kit trauma darurat (AED / Kotak P3K). |
+| <img src="static/drone_bright.png" width="380" alt="RescueDrone High-Visibility" style="border-radius:8px;" /> | **High-Visibility Emergency Edition**: Tampilan visual kontras tinggi untuk identifikasi lokasi dan pengamatan lapangan di segala kondisi cuaca. |
+| <img src="docs/hardware/cad_3d_model.png" width="380" alt="3D CAD Design" style="border-radius:8px;" /> | **Model Mekanikal 3D CAD**: Struktur rangka quadcopter custom dengan arm tube serat karbon Ø16mm dan pelindung baling-baling keselamatan. |
+| <img src="docs/hardware/physical_prototype.jpg" width="380" alt="Prototipe Fisik Nyata" style="border-radius:8px;" /> | **Prototipe Fisik Uji Lapangan**: Integrasi nyata Flight Controller Pixhawk, modul telemetri radio, tiang kompas GPS, dan kaki pendarat tinggi. |
 
-| Tampilan Halaman | Keterangan Fitur |
-| :--- | :--- |
-| <img src="static/drone_dark.png" width="360" alt="RescueDrone Hexacopter" /><br/>**RescueDrone Tactical Hexacopter** | **Desain Aerodinamis & Avionik**: Wahana Hexacopter tanggap darurat berkecepatan tinggi dengan payload kit trauma darurat (AED / Kotak P3K). |
-| <img src="static/drone_bright.png" width="360" alt="RescueDrone High-Visibility" /><br/>**RescueDrone High-Visibility Mode** | **Pencahayaan & Visualisasi Operasional**: Tampilan visual kontras tinggi untuk identifikasi lokasi dan pengamatan lapangan di segala cuaca. |
-| ![Hero Landing & 3D Drone](docs/screenshots/hero_3d_drone.png)<br/>*(Halaman Lapor Warga)* | **Portal Publik & 3D Digital Twin**: Animasi 3D Hexacopter dinamis menggunakan Three.js WebGL dengan bilah baling-baling berputar dan pencahayaan studio. |
-| ![Maxim Location Picker](docs/screenshots/reporter_map.png)<br/>*(Map Picker)* | **Maxim/Uber-Style Location Picker**: Penentuan titik insiden instan dengan pin tengah yang presisi, auto-reverse geocoding (Nominatim), dan deteksi GPS saksi mata. |
-| ![Tactical Admin Dashboard](docs/screenshots/admin_dashboard.png)<br/>*(Tactical HUD)* | **Tactical GCS HUD & Live Telemetry**: Indikator instrumen penerbangan nyata (ketinggian relatif, kecepatan udara, watt baterai, GPS satelit, heading compass). |
-| ![Mission Planner Synchronization](docs/screenshots/mission_planner_sync.png)<br/>*(MAVLink Sync)* | **Sinkronisasi Waypoint MAVLink**: Injeksi rute misi dari web yang langsung ter-upload dan terbaca secara *real-time* di Mission Planner. |
+---
+
+## 🖥️ Modul & Antarmuka Aplikasi
+
+| Modul Antarmuka | Fungsi Utama | Jalur Akses |
+| :--- | :--- | :---: |
+| **Portal Publik & 3D Digital Twin** | Visualisasi 3D drone interaktif Three.js WebGL dengan animasi baling-baling berputar dan pencahayaan studio responsif. | `/lapor` |
+| **Maxim/Uber-Style Location Picker** | Penentuan titik insiden instan dengan pin tengah presisi, auto-reverse geocoding, dan deteksi GPS saksi mata. | `/lapor` (Form) |
+| **Tactical GCS HUD & Live Telemetry** | Indikator instrumen penerbangan MAVLink nyata (ketinggian relatif, kecepatan udara, watt baterai, satelit GPS, heading). | `/admin` |
+| **Sinkronisasi Waypoint MAVLink** | Injeksi rute misi dari web yang langsung ter-upload dan terbaca secara *real-time* di Mission Planner. | `/admin` |
+| **Telegram Emergency Bot** | Jalur cepat pelaporan masyarakat melalui tombol share lokasi otomatis dan kartu kontak WhatsApp. | `@RescueDroneBot` |
+| **Military-Grade Glassmorphic Login** | Portal otentikasi aman terintegrasi dengan Firebase Google OAuth dan akun email SAR. | `/admin/login` |
 
 ---
 
@@ -320,7 +329,9 @@ rescuedrone-web/
 Proyek inovasi teknologi ini dikembangkan dalam rangka:
 - **Program Riset & Inovasi Teknologi Robotika / Kebencanaan (ERIC)**
 - **Universitas Negeri Malang (UM)**
-- **Lead Developer & System Architect**: [Raihan Baskara](https://github.com/raihanbaskara)
+- **Lead Developers & System Architects**:
+  - **Raihan Nauval Aziz**
+  - **Muhammad Rafi Baihaqi**
 
 ---
 
