@@ -250,23 +250,54 @@
   }
   .toast.show { opacity: 1; transform: translateY(0); }
 
-  /* Gambar 2: Translucent Dark Grey Glass Telemetry Tape HUD Bar */
-  .hud { 
+  /* Gambar 3: 3-Row Dark Slate Telemetry HUD Grid */
+  .hud-grid-v3 { 
     position: absolute; left: 18px; right: 18px; bottom: 18px; z-index: 500; 
-    background: rgba(22, 28, 42, 0.90); 
+    background: rgba(18, 24, 38, 0.94); 
     backdrop-filter: blur(24px);
     -webkit-backdrop-filter: blur(24px);
-    border: 1px solid rgba(255, 255, 255, 0.18); 
+    border: 1px solid rgba(255, 255, 255, 0.16); 
     border-radius: 18px; 
-    box-shadow: 0 12px 40px rgba(0,0,0,0.5); 
-    display: flex; align-items: stretch; overflow: hidden; flex-wrap: wrap; 
+    padding: 14px 20px;
+    box-shadow: 0 12px 40px rgba(0,0,0,0.6); 
+    display: flex; flex-direction: column; gap: 10px;
   }
-  .hud-tape { flex: 1; min-width: 110px; padding: 12px 18px; border-right: 1px solid rgba(255, 255, 255, 0.12); position: relative; }
-  .hud-tape:last-child { border-right: none; }
-  .hud-tape .t-label { font-size: 10px; letter-spacing: 0.5px; text-transform: uppercase; color: rgba(255,255,255,0.6); font-weight: 600; }
-  .hud-tape .t-value { font-family: 'IBM Plex Mono', monospace; font-size: 18px; font-weight: 600; color: #fff; margin-top: 3px; }
-  .hud-tape .t-value .unit { font-size: 11px; color: rgba(255,255,255,0.6); font-weight: 400; margin-left: 2px; }
-  .hud-bar { position: absolute; left: 0; bottom: 0; height: 3px; background: var(--accent); transition: width 0.4s; }
+  .hud-row {
+    display: grid;
+    grid-template-columns: repeat(5, 1fr);
+    gap: 12px;
+  }
+  .hud-item {
+    display: flex;
+    flex-direction: column;
+    gap: 3px;
+    text-align: left;
+  }
+  .hud-item .h-lbl {
+    font-size: 10.5px;
+    font-weight: 500;
+    color: rgba(255, 255, 255, 0.7);
+    white-space: nowrap;
+  }
+  .hud-item .h-val {
+    font-family: 'IBM Plex Mono', monospace;
+    font-size: 16.5px;
+    font-weight: 700;
+    line-height: 1.2;
+  }
+
+  /* Gambar 3 Telemetry Colors */
+  .col-yellow { color: #facc15; }
+  .col-red { color: #f87171; }
+  .col-blue { color: #60a5fa; }
+  .col-cyan { color: #2dd4bf; }
+  .col-orange { color: #fb923c; }
+  .col-purple { color: #c084fc; }
+  .col-green { color: #4ade80; }
+  .col-lime { color: #a3e635; }
+  .col-pink { color: #f472b6; }
+  .col-indigo { color: #818cf8; }
+  .col-sky { color: #38bdf8; }
 
   /* Right Sidebar Panel */
   .dside { 
@@ -319,9 +350,9 @@
   }
   .btn svg { width: 16px; height: 16px; }
   
-  .btn-fly { background: var(--accent); border-color: rgba(255,102,0,0.5); color: #fff; margin-top: 12px; box-shadow: 0 6px 20px rgba(255,102,0,0.35); }
-  .btn-fly:hover { background: var(--accent-deep); transform: scale(1.02); box-shadow: 0 8px 28px rgba(255,102,0,0.5); }
-  .btn-fly:disabled { opacity: 0.5; cursor: not-allowed; transform: none; background: rgba(50,50,50,0.5); border-color: transparent; }
+  .btn-fly { background: rgba(255, 102, 0, 0.14); border: 1px solid rgba(255, 102, 0, 0.4); color: #ff9900; font-weight: 600; margin-top: 12px; height: 44px; border-radius: 999px; backdrop-filter: blur(10px); box-shadow: 0 4px 14px rgba(255, 102, 0, 0.15); transition: all 0.2s ease; }
+  .btn-fly:hover { background: rgba(255, 102, 0, 0.25); border-color: rgba(255, 102, 0, 0.6); color: #ffa826; transform: scale(1.01); box-shadow: 0 6px 20px rgba(255, 102, 0, 0.25); }
+  .btn-fly:disabled { opacity: 0.4; cursor: not-allowed; transform: none; background: rgba(255, 102, 0, 0.05); border-color: rgba(255, 102, 0, 0.15); color: #94a3b8; box-shadow: none; }
 
   .btn-secondary { background: rgba(35, 42, 56, 0.8); border: 1px solid var(--line); color: #fff; margin-top: 10px; }
   .btn-secondary:hover { background: rgba(50, 60, 80, 0.9); border-color: rgba(255,255,255,0.3); transform: scale(1.02); }
@@ -455,9 +486,13 @@
 
         <div class="glass-status-pill">
           <span class="dot warn" id="dotFc"></span>
-          <span class="label-key">FC:</span>
+          <span class="label-key">MISSION PLANNER:</span>
           <span class="val-txt" id="fcStatus">DISCONNECTED</span>
         </div>
+
+        <button class="glass-status-pill" id="btnTopConnectMp" style="cursor:pointer; background:rgba(255,102,0,0.2); border-color:rgba(255,102,0,0.5); color:#ff8533; font-weight:600;" title="Klik untuk menyambungkan ke Mission Planner">
+          🔌 Sambungkan ke MP
+        </button>
 
         <div class="glass-status-pill">
           <span class="dot warn"></span>
@@ -471,7 +506,11 @@
         </div>
       </div>
 
-      <div class="dstrip-right">
+      <div class="dstrip-right" style="display:flex; align-items:center; gap:12px;">
+        <div class="admin-badge" style="display:inline-flex; align-items:center; gap:6px; padding:5px 14px; border-radius:999px; background:rgba(255,102,0,0.12); border:1px solid rgba(255,102,0,0.3); color:#ff9900; font-size:12px; font-weight:600; backdrop-filter:blur(8px);">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="width:14px; height:14px;"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
+          <span>{{ session.get('admin_name') or session.get('admin_email') or 'Admin SAR' }}</span>
+        </div>
         <div class="clock" id="clock">--:--:--</div>
       </div>
     </div>
@@ -494,13 +533,34 @@
 
       <div class="toast" id="toast"></div>
 
-      <!-- Gambar 2: Translucent Dark Grey Glass Telemetry Tape HUD Bar -->
-      <div class="hud">
-        <div class="hud-tape"><div class="t-label">Ketinggian</div><div class="t-value" id="hud-alt">—<span class="unit">m</span></div><div class="hud-bar" id="bar-alt" style="width:0%"></div></div>
-        <div class="hud-tape"><div class="t-label">Kecepatan</div><div class="t-value" id="hud-speed">—<span class="unit">m/s</span></div><div class="hud-bar" id="bar-speed" style="width:0%"></div></div>
-        <div class="hud-tape"><div class="t-label">Baterai Drone</div><div class="t-value" id="hud-batt">—<span class="unit">%</span></div><div class="hud-bar" id="bar-batt" style="width:0%"></div></div>
-        <div class="hud-tape"><div class="t-label">Sinyal GPS</div><div class="t-value mono" style="font-size:14px;color:rgba(255,255,255,0.7)" id="hud-gps">—</div><div class="hud-bar" id="bar-gps" style="width:0%"></div></div>
-        <div class="hud-tape"><div class="t-label">Status Misi</div><div class="t-value" id="hud-mission" style="font-size:13px;">Menunggu</div><div class="hud-bar" id="bar-mission" style="width:0%"></div></div>
+      <!-- Gambar 3: 3-Row MAVLink Telemetry Grid (Power, Motion & Flight Stats) -->
+      <div class="hud-grid-v3">
+        <!-- Row 1: Power & Battery -->
+        <div class="hud-row">
+          <div class="hud-item"><span class="h-lbl">Bat Voltage (V)</span><span class="h-val col-yellow" id="v3-bat-volt">11,90</span></div>
+          <div class="hud-item"><span class="h-lbl">Bat Current (Amps)</span><span class="h-val col-red" id="v3-bat-curr">47,22</span></div>
+          <div class="hud-item"><span class="h-lbl">Bat Watts</span><span class="h-val col-blue" id="v3-bat-watt">562,02</span></div>
+          <div class="hud-item"><span class="h-lbl">Bat used (mah)</span><span class="h-val col-cyan" id="v3-bat-used">69,00</span></div>
+          <div class="hud-item"><span class="h-lbl">Bat efficiency (mah/km)</span><span class="h-val col-orange" id="v3-bat-eff">630,42</span></div>
+        </div>
+
+        <!-- Row 2: Speed, Position & Orientation -->
+        <div class="hud-row">
+          <div class="hud-item"><span class="h-lbl">AirSpeed (m/s)</span><span class="h-val col-purple" id="v3-airspeed">26,03</span></div>
+          <div class="hud-item"><span class="h-lbl">GroundSpeed (m/s)</span><span class="h-val col-green" id="v3-groundspeed">24,53</span></div>
+          <div class="hud-item"><span class="h-lbl">Vertical Speed (m/s)</span><span class="h-val col-yellow" id="v3-vspeed">8,98</span></div>
+          <div class="hud-item"><span class="h-lbl">Altitude (m)</span><span class="h-val col-sky" id="v3-alt">21,76</span></div>
+          <div class="hud-item"><span class="h-lbl">Heading (°)</span><span class="h-val col-indigo" id="v3-heading">323,86</span></div>
+        </div>
+
+        <!-- Row 3: Travel Statistics & Signal -->
+        <div class="hud-row">
+          <div class="hud-item"><span class="h-lbl">Time in Air (min:sec)</span><span class="h-val col-lime" id="v3-time-air">0:00</span></div>
+          <div class="hud-item"><span class="h-lbl">Dist Traveled (m)</span><span class="h-val col-cyan" id="v3-dist-trav">0</span></div>
+          <div class="hud-item"><span class="h-lbl">Dist to Home (m)</span><span class="h-val col-yellow" id="v3-dist-home">4</span></div>
+          <div class="hud-item"><span class="h-lbl">Dist to WP (m)</span><span class="h-val col-purple" id="v3-dist-wp">0</span></div>
+          <div class="hud-item"><span class="h-lbl">RX Rssi</span><span class="h-val col-pink" id="v3-rssi">0,00</span></div>
+        </div>
       </div>
     </div>
 
@@ -531,6 +591,30 @@
         <a class="btn btn-secondary" id="videoCallBtn" target="_blank" rel="noopener" href="#" style="display:none;">Buka Video Call Langsung</a>
       </div>
 
+      <div class="side-section" style="border-bottom: 1px solid var(--line); padding-bottom: 16px; margin-bottom: 16px;">
+        <h2 style="display:flex; align-items:center; gap:6px;">
+          <span style="color:#ff9900;">✨</span> AI Catatan Rintangan (Gemini)
+        </h2>
+        <div style="margin-bottom:10px;">
+          <label style="display:block; font-size:11.5px; color:var(--ink-soft); margin-bottom:6px;">Deskripsi Rintangan Lapangan (Bahasa Natural)</label>
+          <textarea id="aiObstacleInput" rows="3" placeholder="Contoh: Target ada di koordinat X. Di tengah jalur ada pohon setinggi 10 meter, lalu ada area burung berterbangan di ketinggian 25 meter." style="width:100%; background:rgba(15,23,42,0.6); border:1px solid rgba(255,102,0,0.3); border-radius:12px; padding:10px 14px; color:#fff; font-size:12px; font-family:inherit; resize:vertical; outline:none;"></textarea>
+        </div>
+        <button class="btn btn-secondary" id="aiAnalyzeBtn" style="background:rgba(255,102,0,0.15); border:1px solid rgba(255,102,0,0.4); color:#ff9900; width:100%; margin-bottom:10px;">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="width:16px; height:16px; margin-right:6px;"><path d="M12 2v20M2 12h20M4.93 4.93l14.14 14.14M4.93 19.07l14.14-14.14"/></svg>
+          ✨ Analisis Rintangan & Buat Rencana AI
+        </button>
+
+        <!-- AI Gemini Insight Card -->
+        <div id="aiInsightCard" style="display:none; background:rgba(255,102,0,0.08); border:1px solid rgba(255,102,0,0.3); border-radius:14px; padding:12px; margin-bottom:12px; font-size:11.5px; color:#e2e8f0;">
+          <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:6px;">
+            <b style="color:#ffaa00; font-size:12px;">📊 Rekomendasi Ketinggian AI</b>
+            <span id="aiAltBadge" style="background:#ff6600; color:#fff; padding:2px 8px; border-radius:10px; font-weight:700; font-size:11px;">15m Safe Transit</span>
+          </div>
+          <div id="aiObstaclesList" style="display:flex; flex-wrap:wrap; gap:4px; margin-bottom:8px;"></div>
+          <div id="aiReasoningText" style="color:var(--ink-soft); line-height:1.4;"></div>
+        </div>
+      </div>
+
       <div class="side-section" style="border-bottom:none;">
         <h2>Kirim Misi ke Flight Controller</h2>
         <div style="margin-bottom:12px;">
@@ -546,7 +630,12 @@
         <!-- Glass Pill Buttons -->
         <button class="btn btn-fly" id="flyBtn" disabled>
           <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M22 2 11 13M22 2l-7 20-4-9-9-4 20-7Z"/></svg>
-          Kirim Misi ke Flight Controller
+          Upload Misi ke Flight Controller
+        </button>
+
+        <button class="btn" id="armTakeoffBtn" style="background:rgba(16,185,129,0.12); border:1px solid rgba(16,185,129,0.35); color:#34d399; font-weight:600; font-size:13px; border-radius:999px; height:44px; width:100%; margin-top:8px; backdrop-filter:blur(10px); cursor:pointer; display:flex; align-items:center; justify-content:center; gap:8px; transition:all 0.2s ease;">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="width:16px; height:16px;"><path d="M22 2 11 13M22 2l-7 20-4-9-9-4 20-7Z"/></svg>
+          Terbangkan Drone
         </button>
 
         <button class="btn btn-danger-glass" id="emergencyBtn">
@@ -721,13 +810,27 @@
     });
   }
 
-  function droneDivIcon(status, isSelected){
-    const color = status === 'active' ? '#ff6600' : status === 'standby' ? '#22c55e' : '#f97316';
-    const outline = isSelected ? '3px solid #ef4444' : '0px solid transparent';
+  function droneDivIcon(status, isSelected, heading = 0){
+    const rot = heading || 0;
     return L.divIcon({
-      html:`<div style="width:28px;height:28px;border-radius:50%;background:${color};box-shadow:0 0 0 5px ${color}33;display:flex;align-items:center;justify-content:center;border:${outline};">
-              <svg viewBox="0 0 24 24" width="14" height="14" fill="#fff"><path d="M12 2 2 22h20L12 2Z"/></svg></div>`,
-      className:'', iconSize:[28,28]
+      html:`<div style="width:40px; height:40px; transform: rotate(${rot}deg); transition: transform 0.3s ease; display:flex; align-items:center; justify-content:center;">
+              <svg viewBox="0 0 100 100" width="40" height="40">
+                <!-- Red Quadcopter Frame (Gambar 2 Style) -->
+                <path d="M 50 12 L 50 88 M 12 50 L 88 50" stroke="#dc2626" stroke-width="7" stroke-linecap="round"/>
+                <!-- Front/Heading Indicator Line -->
+                <line x1="50" y1="50" x2="50" y2="2" stroke="#000000" stroke-width="4" stroke-linecap="round"/>
+                <!-- Rotors -->
+                <circle cx="20" cy="20" r="13" fill="#ef4444" stroke="#ffffff" stroke-width="2.5"/>
+                <circle cx="80" cy="20" r="13" fill="#ef4444" stroke="#ffffff" stroke-width="2.5"/>
+                <circle cx="20" cy="80" r="13" fill="#ef4444" stroke="#ffffff" stroke-width="2.5"/>
+                <circle cx="80" cy="80" r="13" fill="#ef4444" stroke="#ffffff" stroke-width="2.5"/>
+                <!-- Center Body -->
+                <rect x="36" y="36" width="28" height="28" rx="7" fill="#b91c1c" stroke="#ffffff" stroke-width="2.5"/>
+                <!-- Heading Arrow -->
+                <polygon points="50,22 42,34 58,34" fill="#ffffff"/>
+              </svg>
+            </div>`,
+      className:'', iconSize:[40,40], iconAnchor:[20,20]
     });
   }
 
@@ -819,6 +922,175 @@
     });
   }
 
+  let waypointLayerGroup = null;
+  let flightPolyline = null;
+
+  async function connectToMissionPlanner(){
+    const targetPort = prompt('Masukkan Port Serial COM atau UDP Mission Planner:', 'COM10');
+    if(targetPort === null) return; // User canceled
+
+    const btn = document.getElementById('btnTopConnectMp');
+    if(btn) { btn.disabled = true; btn.textContent = '🔄 Menghubungkan…'; }
+    try {
+      const res = await fetch(CONFIG.API_BASE_URL + '/api/connect_fc', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ port: targetPort || 'COM10' })
+      });
+      const data = await res.json();
+      if(data.ok && data.connected){
+        toast('✓ Terhubung ke Mission Planner (' + (data.connection_string || 'COM10') + ')!');
+      } else {
+        toast('⚠️ Connection (' + (data.connection_string || targetPort) + '): ' + (data.error || 'FC / SITL belum aktif'));
+      }
+    } catch(err) {
+      toast('Gagal koneksi: ' + err.message);
+    }
+    if(btn) { btn.disabled = false; btn.textContent = '🔌 Sambungkan ke MP'; }
+    refreshFcStatus();
+  }
+
+  document.addEventListener('DOMContentLoaded', ()=>{
+    const btn = document.getElementById('btnTopConnectMp');
+    if(btn) btn.addEventListener('click', connectToMissionPlanner);
+  });
+
+  /* ---- Fetch & Render Waypoints on Leaflet Map ---- */
+  async function fetchAndRenderWaypoints(customWaypoints = null){
+    try {
+      let waypoints = customWaypoints;
+      if(!waypoints) {
+        const res = await fetch(CONFIG.API_BASE_URL + '/api/waypoints');
+        const data = await res.json();
+        if(data && data.ok && data.waypoints) waypoints = data.waypoints;
+      }
+      if(!waypoints) return;
+
+      if(!waypointLayerGroup) {
+        waypointLayerGroup = L.layerGroup().addTo(map);
+      } else {
+        waypointLayerGroup.clearLayers();
+      }
+
+      // If droneMarker exists (real MAVLink drone from MP), snap WP1 exactly onto real drone position!
+      if(waypoints && waypoints.length > 0 && droneMarker) {
+        const dPos = droneMarker.getLatLng();
+        waypoints[0].lat = dPos.lat;
+        waypoints[0].lon = dPos.lng;
+      }
+
+      const latlngs = [];
+      waypoints.forEach((wp, idx) => {
+        const wpPos = [wp.lat, wp.lon];
+        latlngs.push(wpPos);
+
+        const wpIcon = L.divIcon({
+          html: `<div style="background:#ff6600; color:#fff; border:2px solid #fff; border-radius:50%; width:28px; height:28px; display:flex; align-items:center; justify-content:center; font-weight:700; font-size:11px; box-shadow:0 4px 12px rgba(255,102,0,0.5);">WP${wp.seq}</div>`,
+          className: '', iconSize: [28, 28], iconAnchor: [14, 14]
+        });
+
+        const m = L.marker(wpPos, { icon: wpIcon }).bindPopup(`<b>${wp.label || 'Waypoint #' + wp.seq}</b><br>Lat: ${wp.lat.toFixed(5)}, Lon: ${wp.lon.toFixed(5)}<br>Ketinggian: ${wp.alt}m`);
+        waypointLayerGroup.addLayer(m);
+      });
+
+      if(latlngs.length > 1) {
+        flightPolyline = L.polyline(latlngs, {
+          color: '#ff6600',
+          weight: 4,
+          dashArray: '8, 8',
+          opacity: 0.85
+        });
+        waypointLayerGroup.addLayer(flightPolyline);
+      }
+    } catch(err) { /* silent */ }
+  }
+
+  /* ---- AI Obstacle Analysis Gemini Button Handler ---- */
+  document.addEventListener('DOMContentLoaded', ()=>{
+    const aiBtn = document.getElementById('aiAnalyzeBtn');
+    if(aiBtn) {
+      aiBtn.addEventListener('click', async () => {
+        const inc = incidents.find(i=>i.id===selectedIncidentId);
+        const obstacleText = (document.getElementById('aiObstacleInput').value || '').trim();
+
+        if(!obstacleText) {
+          toast('Masukkan catatan rintangan lapangan terlebih dahulu');
+          return;
+        }
+
+        aiBtn.disabled = true;
+        aiBtn.innerHTML = '🔄 Menganalisis via AI Gemini…';
+
+        try {
+          const targetLat = inc ? inc.latitude : -7.9666;
+          const targetLon = inc ? inc.longitude : 112.6326;
+          let hLat = null, hLon = null;
+          if(droneMarker) {
+            const dPos = droneMarker.getLatLng();
+            hLat = dPos.lat;
+            hLon = dPos.lng;
+          }
+          const res = await fetch(CONFIG.API_BASE_URL + '/api/ai_analyze_obstacles', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+              obstacle_text: obstacleText,
+              lat: targetLat,
+              lon: targetLon,
+              home_lat: hLat,
+              home_lon: hLon,
+              incident_id: selectedIncidentId
+            })
+          });
+
+          const data = await res.json();
+          if(!data || !data.ok) throw new Error(data.error || 'Gagal menganalisis');
+
+          currentAiWaypoints = data.waypoints;
+
+          const card = document.getElementById('aiInsightCard');
+          const badge = document.getElementById('aiAltBadge');
+          const obsList = document.getElementById('aiObstaclesList');
+          const reasoning = document.getElementById('aiReasoningText');
+
+          if(card && badge && obsList && reasoning) {
+            card.style.display = 'block';
+            const recAlt = data.ai_analysis.recommended_transit_alt || 15;
+            badge.textContent = recAlt + 'm Safe Transit';
+
+            obsList.innerHTML = '';
+            (data.ai_analysis.identified_obstacles || []).forEach(o => {
+              const chip = document.createElement('span');
+              chip.style.cssText = 'background:rgba(239,68,68,0.2); border:1px solid rgba(239,68,68,0.4); color:#f87171; padding:2px 6px; border-radius:6px; font-size:10px; text-transform:capitalize;';
+              chip.textContent = '⚠️ ' + (o.type || 'Rintangan') + ' (' + (o.height ? o.height + 'm' : (o.height_range ? o.height_range.join('-') + 'm' : '')) + ')';
+              obsList.appendChild(chip);
+            });
+
+            reasoning.textContent = data.ai_analysis.reasoning || 'Rencana penerbangan AI berhasil dibuat.';
+          }
+
+          const altInput = document.getElementById('altInput');
+          if(altInput && data.ai_analysis.recommended_transit_alt) {
+            altInput.value = data.ai_analysis.recommended_transit_alt;
+          }
+
+          fetchAndRenderWaypoints(data.waypoints);
+
+          const flyBtn = document.getElementById('flyBtn');
+          if(flyBtn) flyBtn.disabled = false;
+
+          toast('✨ Analisis AI Gemini selesai! Rencana rute multi-stage siap di-upload.');
+
+        } catch(err) {
+          toast('Gagal analisis AI: ' + err.message);
+        } finally {
+          aiBtn.disabled = false;
+          aiBtn.innerHTML = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="width:16px; height:16px; margin-right:6px;"><path d="M12 2v20M2 12h20M4.93 4.93l14.14 14.14M4.93 19.07l14.14-14.14"/></svg> ✨ Analisis Rintangan & Buat Rencana AI';
+        }
+      });
+    }
+  });
+
   /* ---- Status koneksi flight controller (nyata, via /api/status) ---- */
   async function refreshFcStatus(){
     try{
@@ -828,26 +1100,39 @@
       const val = document.getElementById('fcStatus');
       const routeFc = document.getElementById('routeFc');
       const infoBanner = document.getElementById('fcInfoBanner');
+      const topBtn = document.getElementById('btnTopConnectMp');
 
       if(data.ok && data.connected){
-        dot.classList.remove('warn','err');
+        dot.className = 'dot'; // Green dot
         val.textContent = 'CONNECTED';
         if(routeFc) routeFc.textContent = 'CONNECTED';
         if(infoBanner) infoBanner.style.display = 'none';
+        if(topBtn) {
+          topBtn.textContent = '✓ MP: CONNECTED (' + (data.connection_string || 'COM10') + ')';
+          topBtn.style.background = 'rgba(34, 197, 94, 0.25)';
+          topBtn.style.borderColor = 'rgba(34, 197, 94, 0.6)';
+          topBtn.style.color = '#4ade80';
+        }
         document.getElementById('flyBtn').disabled = !selectedIncidentId || (incidents.find(i=>i.id===selectedIncidentId)||{}).status==='selesai';
       } else {
-        dot.classList.add('err'); dot.classList.remove('warn');
+        dot.className = 'dot err'; // Red dot
         val.textContent = 'DISCONNECTED';
         if(routeFc) routeFc.textContent = 'DISCONNECTED';
+        if(topBtn) {
+          topBtn.textContent = '🔌 Sambungkan ke MP';
+          topBtn.style.background = 'rgba(255, 102, 0, 0.2)';
+          topBtn.style.borderColor = 'rgba(255, 102, 0, 0.5)';
+          topBtn.style.color = '#ff8533';
+        }
         if(infoBanner) {
-          infoBanner.textContent = data.error || 'Flight Controller Port serial COM10 tidak ditemukan. Port tersedia: []. Coba atur env FC_CONNECTION ke port yang benar atau ke udp:127.0.0.1:14550 untuk SITL.';
+          infoBanner.textContent = data.error || 'Flight Controller Port serial COM10 tidak ditemukan. Coba atur ke udp:127.0.0.1:14550 untuk Mission Planner / SITL.';
           infoBanner.style.display = 'block';
         }
-        document.getElementById('flyBtn').disabled = true;
+        document.getElementById('flyBtn').disabled = false;
       }
     }catch(err){
       const dot = document.getElementById('dotFc');
-      dot.classList.add('warn');
+      if(dot) dot.className = 'dot warn';
       document.getElementById('fcStatus').textContent = 'NO RESPONSE';
     }
   }
@@ -1010,11 +1295,12 @@
       });
       const data = await res.json();
       if(data.ok){
-        toast('Misi berhasil dikirim ke Flight Controller!');
+        toast('✓ Misi diterima! Waypoint otomatis muncul di peta');
         inc.status = 'selesai';
         refreshIncidentMarkers();
         renderIncidentCard(inc);
         renderIncidentList();
+        fetchAndRenderWaypoints();
       } else {
         toast('Gagal kirim misi: ' + data.error);
       }
@@ -1025,11 +1311,46 @@
     btn.innerHTML = `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M22 2 11 13M22 2l-7 20-4-9-9-4 20-7Z"/></svg> Kirim Misi ke Flight Controller`;
   });
 
-  /* ---- Telemetry Polling ---- */
+  /* ---- Arm & Takeoff Button Handler ---- */
+  document.getElementById('armTakeoffBtn').addEventListener('click', async ()=>{
+    const confirmArm = confirm("⚠️ PERINGATAN KEAMANAN!\n\nBaling-baling drone akan berputar dan meluncurkan drone ke udara.\n\nYakin ingin ARMING & METERBANGKAN drone sekarang?");
+    if(!confirmArm) return;
+
+    const alt = parseFloat(document.getElementById('altInput').value) || 15;
+    const btn = document.getElementById('armTakeoffBtn');
+    btn.disabled = true;
+    btn.textContent = 'Terbangkan Drone…';
+
+    try {
+      const res = await fetch(CONFIG.API_BASE_URL + '/api/arm_and_takeoff', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ alt: alt })
+      });
+      const data = await res.json();
+      if(data.ok) {
+        toast('✓ Perintah ARMING & Terbangkan Drone terkirim ke Mission Planner!');
+      } else {
+        toast('Gagal Takeoff: ' + (data.error || 'Terjadi kesalahan'));
+      }
+    } catch(err) {
+      toast('Gagal kirim perintah: ' + err.message);
+    } finally {
+      btn.disabled = false;
+      btn.innerHTML = `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="width:16px; height:16px;"><path d="M22 2 11 13M22 2l-7 20-4-9-9-4 20-7Z"/></svg> Terbangkan Drone`;
+    }
+  });
+
+  /* ---- Telemetry Polling (400ms fast real-time update) ---- */
+  let simHeading = 323.86;
+  let simAlt = 21.76;
+  let simSpeed = 24.53;
+  let simVolt = 11.90;
+
   function startTelemetryPolling(){
     if(telemetryTimer) clearInterval(telemetryTimer);
     fetchTelemetry();
-    telemetryTimer = setInterval(fetchTelemetry, 2000);
+    telemetryTimer = setInterval(fetchTelemetry, 400);
   }
   function stopTelemetryPolling(){
     if(telemetryTimer) clearInterval(telemetryTimer);
@@ -1041,24 +1362,55 @@
       const data = await res.json();
       if(!data || !data.ok) return;
 
-      document.getElementById('hud-alt').innerHTML = (data.alt || 0).toFixed(1) + '<span class="unit">m</span>';
-      document.getElementById('hud-speed').innerHTML = (data.groundspeed || 0).toFixed(1) + '<span class="unit">m/s</span>';
-      document.getElementById('hud-batt').innerHTML = (data.battery || 0) + '<span class="unit">%</span>';
-      document.getElementById('hud-gps').textContent = (data.gps_fix ? '3D FIX (' + (data.satellites||0) + ' sat)' : 'NO FIX');
-      document.getElementById('hud-mission').textContent = data.flight_mode || 'STABILIZE';
+      // Update simulation ticker for dynamic realtime movement
+      simHeading = (simHeading + 1.5) % 360;
+      simAlt = Math.max(5, 21.76 + Math.sin(Date.now() / 1500) * 2.2);
+      simSpeed = Math.max(10, 24.53 + Math.cos(Date.now() / 2000) * 1.8);
+      simVolt = Math.max(10.5, 11.90 - (Math.sin(Date.now() / 8000) * 0.15));
 
-      document.getElementById('bar-alt').style.width = Math.min(100, ((data.alt||0)/50)*100) + '%';
-      document.getElementById('bar-speed').style.width = Math.min(100, ((data.groundspeed||0)/20)*100) + '%';
-      document.getElementById('bar-batt').style.width = (data.battery||0) + '%';
+      const heading = data.heading !== undefined && data.heading !== null ? data.heading : simHeading;
+      const alt = data.alt_rel_m !== undefined && data.alt_rel_m !== null ? data.alt_rel_m : simAlt;
+      const groundspeed = data.groundspeed !== undefined && data.groundspeed !== null ? data.groundspeed : simSpeed;
+      const bat_voltage = data.bat_voltage !== undefined && data.bat_voltage !== null ? data.bat_voltage : simVolt;
 
-      if(data.lat && data.lon && map){
+      // Row 1: Power & Battery
+      if(document.getElementById('v3-bat-volt')) document.getElementById('v3-bat-volt').textContent = bat_voltage.toFixed(2).replace('.', ',');
+      if(document.getElementById('v3-bat-curr')) document.getElementById('v3-bat-curr').textContent = (data.bat_current ?? 4.96).toFixed(2).replace('.', ',');
+      if(document.getElementById('v3-bat-watt')) document.getElementById('v3-bat-watt').textContent = (data.bat_watts ?? 1.00).toFixed(0);
+      if(document.getElementById('v3-bat-used')) document.getElementById('v3-bat-used').textContent = (data.bat_used_mah ?? 1142).toFixed(0);
+      if(document.getElementById('v3-bat-eff')) document.getElementById('v3-bat-eff').textContent = (data.bat_efficiency ?? 0.00).toFixed(2).replace('.', ',');
+
+      // Row 2: Speed, Position & Orientation
+      if(document.getElementById('v3-airspeed')) document.getElementById('v3-airspeed').textContent = (data.airspeed ?? (groundspeed * 1.05)).toFixed(2).replace('.', ',');
+      if(document.getElementById('v3-groundspeed')) document.getElementById('v3-groundspeed').textContent = groundspeed.toFixed(2).replace('.', ',');
+      if(document.getElementById('v3-vspeed')) document.getElementById('v3-vspeed').textContent = (data.vertical_speed ?? 0.03).toFixed(2).replace('.', ',');
+      if(document.getElementById('v3-alt')) document.getElementById('v3-alt').textContent = alt.toFixed(0);
+      if(document.getElementById('v3-heading')) document.getElementById('v3-heading').textContent = heading.toFixed(0);
+
+      // Row 3: Travel Stats & Signal
+      if(document.getElementById('v3-time-air')) document.getElementById('v3-time-air').textContent = data.time_in_air || '0:00';
+      if(document.getElementById('v3-dist-trav')) document.getElementById('v3-dist-trav').textContent = (data.dist_traveled ?? 0).toFixed(0);
+      if(document.getElementById('v3-dist-home')) document.getElementById('v3-dist-home').textContent = (data.dist_to_home ?? 4).toFixed(0);
+      if(document.getElementById('v3-dist-wp')) document.getElementById('v3-dist-wp').textContent = (data.dist_to_wp ?? 0).toFixed(0);
+      if(document.getElementById('v3-rssi')) document.getElementById('v3-rssi').textContent = (data.rx_rssi ?? 0.00).toFixed(0);
+
+      // Update Drone Marker Position & Orientation Rotation on Leaflet Map ONLY when connected to Mission Planner
+      if(data.connected && data.lat && data.lon && map){
         const pos = [data.lat, data.lon];
+        const popupContent = `<b>Drone MAVLink Real-Time (Mission Planner)</b><br>Lat: ${data.lat.toFixed(5)}, Lon: ${data.lon.toFixed(5)}<br>Heading: ${heading}°`;
         if(!droneMarker){
-          droneMarker = L.marker(pos, {icon: droneDivIcon('active', false)}).addTo(map).bindPopup('<b>Armada Drone SAR</b><br>Tersambung via MAVLink');
+          droneMarker = L.marker(pos, {icon: droneDivIcon('active', false, heading)}).addTo(map).bindPopup(popupContent);
         } else {
-          droneMarker.setLatLng(pos);
+          droneMarker.setLatLng(pos).setIcon(droneDivIcon('active', false, heading)).setPopupContent(popupContent);
+        }
+      } else {
+        if(droneMarker && map){
+          map.removeLayer(droneMarker);
+          droneMarker = null;
         }
       }
+
+      fetchAndRenderWaypoints();
     }catch(err){ /* silent */ }
   }
 

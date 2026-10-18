@@ -1,0 +1,11 @@
+venv/
+.venv/
+__pycache__/
+*.pyc
+rescuedrone.db
+uploads/*
+!uploads/.gitkeep
+tests/
+.vscode/
+tempCodeRunnerFile.py
+.git

@@ -8,6 +8,11 @@
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Playfair+Display:ital,wght@1,400;1,500;1,600&family=Space+Grotesk:wght@600;700&display=swap" rel="stylesheet">
+
+<!-- Firebase App & Auth SDK (v10 Compat CDN) -->
+<script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-auth-compat.js"></script>
+
 <style>
   * { box-sizing: border-box; margin: 0; padding: 0; }
   body { 
@@ -34,29 +39,58 @@
     -webkit-backdrop-filter: blur(24px);
     border: 1px solid rgba(255, 255, 255, 0.18); 
     border-radius: 24px; 
-    padding: 40px 36px; 
+    padding: 36px 32px; 
     width: 100%; 
-    max-width: 420px;
+    max-width: 440px;
     box-shadow: 0 20px 50px rgba(0,0,0,0.6); 
     text-align: center;
   }
 
   .brand-icon {
-    width: 44px; height: 44px; border-radius: 12px; background: #ff6600; color: #fff; display: inline-flex;
-    align-items: center; justify-content: center; margin-bottom: 20px; box-shadow: 0 0 24px rgba(255,102,0,0.4);
+    width: 48px; height: 48px; border-radius: 14px; background: #ff6600; color: #fff; display: inline-flex;
+    align-items: center; justify-content: center; margin-bottom: 16px; box-shadow: 0 0 24px rgba(255,102,0,0.4);
   }
-  .brand-icon svg { width: 24px; height: 24px; stroke: currentColor; fill: none; stroke-width: 2.5; }
+  .brand-icon svg { width: 26px; height: 26px; stroke: currentColor; fill: none; stroke-width: 2.5; }
 
   .title-wrap {
-    margin-bottom: 24px;
+    margin-bottom: 20px;
   }
   h1 {
     font-size: 22px; 
-    font-weight: 500; 
+    font-weight: 600; 
     color: #ffffff; 
     margin: 0 0 6px;
   }
   p { font-size: 13.5px; color: rgba(255, 255, 255, 0.65); margin: 0; }
+
+  /* Tab Switcher (Sign In vs Sign Up) */
+  .tab-group {
+    display: flex;
+    background: rgba(255, 255, 255, 0.06);
+    border: 1px solid rgba(255, 255, 255, 0.12);
+    border-radius: 999px;
+    padding: 4px;
+    margin-bottom: 20px;
+  }
+  .tab-btn {
+    flex: 1;
+    padding: 9px 16px;
+    border: none;
+    border-radius: 999px;
+    background: transparent;
+    color: rgba(255, 255, 255, 0.6);
+    font-family: 'Inter', sans-serif;
+    font-size: 13px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.2s ease;
+  }
+  .tab-btn.active {
+    background: rgba(255, 102, 0, 0.25);
+    border: 1px solid rgba(255, 102, 0, 0.5);
+    color: #ffffff;
+    box-shadow: 0 2px 10px rgba(255, 102, 0, 0.2);
+  }
 
   .err-msg {
     background: rgba(239, 68, 68, 0.15); 
@@ -68,10 +102,24 @@
     font-weight: 600; 
     margin-bottom: 20px; 
     text-align: left;
+    display: none;
   }
 
-  .field { text-align: left; margin-bottom: 18px; }
-  label { display: block; font-size: 12px; font-weight: 600; color: rgba(255,255,255,0.75); margin-bottom: 6px; text-transform: uppercase; letter-spacing: 0.04em; }
+  .success-msg {
+    background: rgba(16, 185, 129, 0.15); 
+    border: 1px solid rgba(16, 185, 129, 0.4); 
+    color: #34d399; 
+    padding: 12px 16px; 
+    border-radius: 14px; 
+    font-size: 13px; 
+    font-weight: 600; 
+    margin-bottom: 20px; 
+    text-align: left;
+    display: none;
+  }
+
+  .field { text-align: left; margin-bottom: 16px; }
+  label { display: block; font-size: 11.5px; font-weight: 600; color: rgba(255,255,255,0.75); margin-bottom: 6px; text-transform: uppercase; letter-spacing: 0.04em; }
   input {
     width: 100%; 
     padding: 12px 16px; 
@@ -86,30 +134,77 @@
   input::placeholder { color: rgba(255, 255, 255, 0.4); }
   input:focus { outline: none; border-color: #ff6600; background: rgba(255, 255, 255, 0.12); box-shadow: 0 0 16px rgba(255,102,0,0.3); }
 
-  /* Translucent Glass Pill Submit Button */
+  /* Translucent Glass Submit Button */
   .btn-submit {
     width: 100%; 
-    padding: 14px; 
+    padding: 13px; 
     border-radius: 999px; 
-    border: 1px solid rgba(255, 102, 0, 0.5); 
-    background: #ff6600; 
-    color: #ffffff;
+    border: 1px solid rgba(255, 102, 0, 0.45); 
+    background: rgba(255, 102, 0, 0.16); 
+    color: #ff9900;
     font-family: 'Inter', sans-serif; 
-    font-size: 14.5px; 
+    font-size: 14px; 
     font-weight: 600; 
     cursor: pointer;
-    box-shadow: 0 8px 24px rgba(255,102,0,0.4); 
-    transition: all 0.25s cubic-bezier(0.16, 1, 0.3, 1); 
-    margin-top: 10px;
+    backdrop-filter: blur(10px);
+    box-shadow: 0 4px 16px rgba(255, 102, 0, 0.15); 
+    transition: all 0.25s ease; 
+    margin-top: 6px;
   }
-  .btn-submit:hover { background: #e05500; transform: scale(1.02); box-shadow: 0 12px 32px rgba(255,102,0,0.5); }
-  .btn-submit:active { transform: scale(0.97); }
+  .btn-submit:hover {
+    background: rgba(255, 102, 0, 0.28);
+    border-color: rgba(255, 102, 0, 0.65);
+    color: #ffa826;
+    transform: scale(1.01);
+    box-shadow: 0 6px 22px rgba(255, 102, 0, 0.25);
+  }
+  .btn-submit:disabled { opacity: 0.5; cursor: not-allowed; transform: none; }
+
+  .divider {
+    display: flex;
+    align-items: center;
+    margin: 20px 0;
+    color: rgba(255, 255, 255, 0.35);
+    font-size: 12px;
+  }
+  .divider::before, .divider::after {
+    content: "";
+    flex: 1;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.12);
+  }
+  .divider span { padding: 0 12px; }
+
+  /* Google Sign In Glass Button */
+  .btn-google {
+    width: 100%;
+    padding: 12px;
+    border-radius: 999px;
+    border: 1px solid rgba(255, 255, 255, 0.2);
+    background: rgba(255, 255, 255, 0.08);
+    color: #ffffff;
+    font-family: 'Inter', sans-serif;
+    font-size: 13.5px;
+    font-weight: 600;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 10px;
+    backdrop-filter: blur(10px);
+    transition: all 0.2s ease;
+  }
+  .btn-google:hover {
+    background: rgba(255, 255, 255, 0.15);
+    border-color: rgba(255, 255, 255, 0.35);
+    transform: scale(1.01);
+  }
+  .btn-google svg { width: 18px; height: 18px; }
 </style>
 </head>
 <body>
   <div class="login-card">
     <div class="brand-icon">
-      <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#ffffff" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+      <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#ffffff" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
         <polygon points="12 2 2 7 12 12 22 7 12 2"></polygon>
         <polyline points="2 17 12 22 22 17"></polyline>
         <polyline points="2 12 12 17 22 12"></polyline>
@@ -118,24 +213,218 @@
 
     <div class="title-wrap">
       <h1>Portal Admin <span class="font-playfair" style="font-style: italic;">RescueDrone</span></h1>
-      <p>Silakan login untuk mengelola drone &amp; insiden SAR</p>
+      <p id="subTitle">Silakan masuk ke Dashboard Admin SAR</p>
     </div>
 
-    {% if error %}
-    <div class="err-msg">⚠️ {{ error }}</div>
-    {% endif %}
+    <!-- Tab Switcher -->
+    <div class="tab-group">
+      <button class="tab-btn active" id="tabSignIn">Sign In (Masuk)</button>
+      <button class="tab-btn" id="tabSignUp">Sign Up (Daftar)</button>
+    </div>
 
-    <form method="POST" action="/admin/login">
+    <div class="err-msg" id="errorBox"></div>
+    <div class="success-msg" id="successBox"></div>
+
+    <!-- Login Form -->
+    <form id="authForm" onsubmit="handleAuthSubmit(event)">
+      <div class="field" id="nameField" style="display: none;">
+        <label>Nama Lengkap Admin</label>
+        <input type="text" id="nameInput" placeholder="Masukkan nama Anda" />
+      </div>
       <div class="field">
-        <label>Username Admin</label>
-        <input type="text" name="username" placeholder="Masukkan username admin" required autofocus />
+        <label>Email Admin</label>
+        <input type="email" id="emailInput" placeholder="admin@rescuedrone.com" required autofocus />
       </div>
       <div class="field">
         <label>Password</label>
-        <input type="password" name="password" placeholder="Masukkan password" required />
+        <input type="password" id="passwordInput" placeholder="Masukkan password" required />
       </div>
-      <button type="submit" class="btn-submit">Masuk ke Dashboard Admin</button>
+      <button type="submit" class="btn-submit" id="submitBtn">Masuk ke Dashboard Admin</button>
     </form>
+
+    <div class="divider"><span>atau masuk dengan</span></div>
+
+    <!-- Google Sign In Button -->
+    <button class="btn-google" id="googleBtn" onclick="handleGoogleSignIn()">
+      <svg viewBox="0 0 24 24">
+        <path fill="#4285F4" d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z"/>
+        <path fill="#34A853" d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z"/>
+        <path fill="#FBBC05" d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.06H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.94l2.85-2.22.81-.63z"/>
+        <path fill="#EA4335" d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.06l3.66 2.84c.87-2.6 3.3-4.52 6.16-4.52z"/>
+      </svg>
+      Masuk dengan Google
+    </button>
   </div>
+
+  <script>
+    /* =========================================================================
+       FIREBASE CONFIGURATION
+       ========================================================================= */
+    const firebaseConfig = {
+      apiKey: "AIzaSyAmHiWohdc8GmAzHCxZ_Ni-6Pq4m1zDcfc",
+      authDomain: "rescue-tag-cc562.firebaseapp.com",
+      databaseURL: "https://rescue-tag-cc562-default-rtdb.firebaseio.com",
+      projectId: "rescue-tag-cc562",
+      storageBucket: "rescue-tag-cc562.firebasestorage.app",
+      messagingSenderId: "38339629790",
+      appId: "1:38339629790:web:7019cdf8ce8e6cb36ae84f",
+      measurementId: "G-KMW19ERDCH"
+    };
+
+    let isFirebaseActive = false;
+
+    // Inisialisasi Firebase (Jika API key telah diisi)
+    try {
+      if (typeof firebase !== 'undefined' && firebaseConfig.apiKey && !firebaseConfig.apiKey.includes("YOUR_FIREBASE")) {
+        firebase.initializeApp(firebaseConfig);
+        isFirebaseActive = true;
+        console.log("✓ Firebase Auth berhasil diinisialisasi!");
+      }
+    } catch (e) {
+      console.warn("Firebase belum diisi atau error:", e);
+    }
+
+    /* =========================================================================
+       UI TAB SWITCHER (SIGN IN vs SIGN UP)
+       ========================================================================= */
+    let currentMode = 'signin';
+    const tabSignIn = document.getElementById('tabSignIn');
+    const tabSignUp = document.getElementById('tabSignUp');
+    const nameField = document.getElementById('nameField');
+    const submitBtn = document.getElementById('submitBtn');
+    const subTitle = document.getElementById('subTitle');
+    const errorBox = document.getElementById('errorBox');
+    const successBox = document.getElementById('successBox');
+
+    tabSignIn.addEventListener('click', () => {
+      currentMode = 'signin';
+      tabSignIn.classList.add('active');
+      tabSignUp.classList.remove('active');
+      nameField.style.display = 'none';
+      submitBtn.textContent = 'Masuk ke Dashboard Admin';
+      subTitle.textContent = 'Silakan masuk ke Dashboard Admin SAR';
+      hideAlerts();
+    });
+
+    tabSignUp.addEventListener('click', () => {
+      currentMode = 'signup';
+      tabSignUp.classList.add('active');
+      tabSignIn.classList.remove('active');
+      nameField.style.display = 'block';
+      submitBtn.textContent = 'Daftar Akun Admin Baru';
+      subTitle.textContent = 'Buat akun admin baru via Firebase';
+      hideAlerts();
+    });
+
+    function showError(msg) {
+      errorBox.textContent = '⚠️ ' + msg;
+      errorBox.style.display = 'block';
+      successBox.style.display = 'none';
+    }
+
+    function showSuccess(msg) {
+      successBox.textContent = '✓ ' + msg;
+      successBox.style.display = 'block';
+      errorBox.style.display = 'none';
+    }
+
+    function hideAlerts() {
+      errorBox.style.display = 'none';
+      successBox.style.display = 'none';
+    }
+
+    /* =========================================================================
+       AUTHENTICATION HANDLERS
+       ========================================================================= */
+    async function verifyWithBackend(user) {
+      const res = await fetch('/api/firebase-login', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          email: user.email,
+          uid: user.uid,
+          displayName: user.displayName || document.getElementById('nameInput').value.trim()
+        })
+      });
+      const data = await res.json();
+      if (data.ok) {
+        showSuccess("Login Berhasil! Mengalihkan ke Dashboard...");
+        setTimeout(() => { window.location.href = data.redirect || '/admin'; }, 800);
+      } else {
+        showError(data.error || "Gagal verifikasi dengan server.");
+      }
+    }
+
+    async function handleAuthSubmit(e) {
+      e.preventDefault();
+      hideAlerts();
+
+      const email = document.getElementById('emailInput').value.trim();
+      const password = document.getElementById('passwordInput').value.trim();
+
+      if (!email || !password) {
+        showError("Email dan password wajib diisi!");
+        return;
+      }
+
+      submitBtn.disabled = true;
+
+      if (isFirebaseActive) {
+        try {
+          if (currentMode === 'signin') {
+            const userCred = await firebase.auth().signInWithEmailAndPassword(email, password);
+            await verifyWithBackend(userCred.user);
+          } else {
+            const userCred = await firebase.auth().createUserWithEmailAndPassword(email, password);
+            await verifyWithBackend(userCred.user);
+          }
+        } catch (err) {
+          submitBtn.disabled = false;
+          let msg = err.message;
+          if (err.code === 'auth/user-not-found') msg = 'Akun belum terdaftar. Silakan pilih tab Sign Up.';
+          if (err.code === 'auth/wrong-password') msg = 'Password salah. Silakan coba lagi.';
+          if (err.code === 'auth/email-already-in-use') msg = 'Email ini sudah terdaftar di Firebase.';
+          if (err.code === 'auth/weak-password') msg = 'Password terlalu lemah (minimal 6 karakter).';
+          showError(msg);
+        }
+      } else {
+        // Fallback Tradisional Flask Login (Jika Firebase Config belum diisi)
+        try {
+          const res = await fetch('/api/login', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ username: email, password: password })
+          });
+          const data = await res.json();
+          if (data.ok) {
+            showSuccess("Login Berhasil! Mengalihkan ke Dashboard...");
+            setTimeout(() => { window.location.href = '/admin'; }, 800);
+          } else {
+            showError(data.error || "Username atau password salah.");
+            submitBtn.disabled = false;
+          }
+        } catch (err) {
+          showError("Gagal terhubung ke server: " + err.message);
+          submitBtn.disabled = false;
+        }
+      }
+    }
+
+    async function handleGoogleSignIn() {
+      hideAlerts();
+      if (!isFirebaseActive) {
+        showError("Isi variabel firebaseConfig di file admin_login.html terlebih dahulu untuk mengaktifkan Google Sign-In.");
+        return;
+      }
+
+      const provider = new firebase.auth.GoogleAuthProvider();
+      try {
+        const result = await firebase.auth().signInWithPopup(provider);
+        await verifyWithBackend(result.user);
+      } catch (err) {
+        showError("Gagal Google Sign-In: " + err.message);
+      }
+    }
+  </script>
 </body>
 </html>
