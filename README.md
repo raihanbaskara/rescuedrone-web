@@ -110,6 +110,7 @@ flowchart TD
 | <img src="static/drone_bright.png" width="380" alt="RescueDrone High-Visibility" style="border-radius:8px;" /> | **High-Visibility Emergency Edition**: Tampilan visual kontras tinggi untuk identifikasi lokasi dan pengamatan lapangan di segala kondisi cuaca. |
 | <img src="docs/hardware/cad_3d_model.png" width="380" alt="3D CAD Design" style="border-radius:8px;" /> | **Model Mekanikal 3D CAD**: Struktur rangka quadcopter custom dengan arm tube serat karbon Ø16mm dan pelindung baling-baling keselamatan. |
 | <img src="docs/hardware/physical_prototype.jpg" width="380" alt="Prototipe Fisik Nyata" style="border-radius:8px;" /> | **Prototipe Fisik Uji Lapangan**: Integrasi nyata Flight Controller Pixhawk, modul telemetri radio, tiang kompas GPS, dan kaki pendarat tinggi. |
+| <img src="docs/screenshots/mission_planner_sync.png" width="380" alt="Mission Planner Telemetry Sync" style="border-radius:8px;" /> | **Sinkronisasi MAVLink GCS (Mission Planner)**: Telemetri nyata penerbangan dan konfirmasi eksekusi perintah ARM (`MAV_CMD_COMPONENT_ARM_DISARM`) pada Pixhawk 6C (ArduCopter V4.6.3). |
 
 ---
 
@@ -178,12 +179,14 @@ Proyek ini tidak hanya berfokus pada perangkat lunak, tetapi juga mencakup peran
 | Komponen | Spesifikasi / Konfigurasi Nyata |
 | :--- | :--- |
 | **Airframe** | Custom Carbon Fiber Quadcopter (Tube Ø16mm) + 3D Printed Brackets |
-| **Flight Controller** | Pixhawk Autopilot (ArduPilot Copter Firmware) |
+| **Flight Controller** | Holybro Pixhawk 6C (bdshot) |
+| **Firmware** | ArduCopter V4.6.3 Autopilot |
+| **GCS Telemetry Software** | Mission Planner (Titan Dynamics Edition) |
 | **Sistem Navigasi** | Eksternal GPS Compass Tower Neo-M8N + Barometer internal |
 | **Propulsi** | Brushless Motors + Tri-Blade (3-Bilah) High-Efficiency Propellers |
 | **Safety Features** | Pelindung Baling-baling (*Propeller Guards*) oranye visibilitas tinggi |
 | **Landing Gear** | Tall High-Clearance Struts (Melindungi kompartemen payload bawah) |
-| **Telemetry Link** | Holybro SiK Telemetry Radio 433MHz / 915MHz & MAVLink UDP Forwarder |
+| **Telemetry Link** | Holybro SiK Telemetry Radio COM10 (115200 Baud) & MAVLink UDP :14550 |
 | **Payload Box** | Kompartemen pelepasan cepat (*Quick-Release*) muatan darurat (AED / P3K) |
 
 ---
