@@ -704,6 +704,11 @@ def uploaded_file(filename):
     return send_from_directory(UPLOAD_DIR, filename)
 
 
+@app.route("/static/<path:filename>")
+def serve_static(filename):
+    return send_from_directory(os.path.join(BASE_DIR, "static"), filename)
+
+
 @app.route("/api/connect_fc", methods=["POST", "GET"])
 def api_connect_fc():
     """Sambungkan ulang ke Mission Planner / Flight Controller."""

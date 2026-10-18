@@ -14,6 +14,10 @@
 
 <br/>
 
+<img src="static/drone_dark.png" alt="RescueDrone Autonomous Aerial First-Response System" width="720" style="border-radius: 12px; max-width: 100%; box-shadow: 0 12px 36px rgba(0,0,0,0.6);" />
+
+<br/><br/>
+
 **Sistem tanggap darurat kecelakaan & medis otonom berbasis drone (UAV) yang mendahului kedatangan ambulans darat untuk pertolongan pertama (Golden Hour) di lokasi kejadian.**
 
 [🌐 Demo Online (Vercel)](#-panduan-deploy-ke-vercel) • [📖 Fitur Utama](#-fitur-unggulan) • [📐 Arsitektur Sistem](#-arsitektur-sistem) • [🚀 Cara Menjalankan](#-panduan-instalasi--penggunaan) • [📡 API Reference](#-dokumentasi-rest-api)
@@ -104,12 +108,12 @@ flowchart TD
 
 | Tampilan Halaman | Keterangan Fitur |
 | :--- | :--- |
-| ![Hero Landing & 3D Drone](docs/screenshots/hero_3d_drone.png)<br/>*(Fallback: Halaman Lapor Warga)* | **Portal Publik & 3D Digital Twin**: Animasi 3D Hexacopter dinamis menggunakan Three.js WebGL dengan bilah baling-baling berputar dan pencahayaan studio. |
-| ![Maxim Location Picker](docs/screenshots/reporter_map.png)<br/>*(Fallback: Map Picker)* | **Maxim/Uber-Style Location Picker**: Penentuan titik insiden instan dengan pin tengah yang presisi, auto-reverse geocoding (Nominatim), dan deteksi GPS saksi mata. |
-| ![Tactical Admin Dashboard](docs/screenshots/admin_dashboard.png)<br/>*(Fallback: Tactical HUD)* | **Tactical GCS HUD & Live Telemetry**: Indikator instrumen penerbangan nyata (ketinggian relatif, kecepatan udara, watt baterai, GPS satelit, heading compass). |
-| ![Mission Planner Synchronization](docs/screenshots/mission_planner_sync.png)<br/>*(Fallback: MAVLink Sync)* | **Sinkronisasi Waypoint MAVLink**: Injeksi rute misi dari web yang langsung ter-upload dan terbaca secara *real-time* di Mission Planner. |
-| ![Telegram Emergency Bot](docs/screenshots/telegram_bot_flow.png)<br/>*(Fallback: Telegram Flow)* | **Telegram Emergency Bot**: Jalur cepat pelaporan masyarakat melalui tombol share lokasi dan kartu kontak nomor WhatsApp secara otomatis. |
-| ![Glassmorphic Admin Login](docs/screenshots/admin_login_glass.png)<br/>*(Fallback: Login Portal)* | **Military-Grade Glassmorphic Login**: Portal otentikasi aman terintegrasi dengan Firebase Google OAuth dan akun email SAR. |
+| <img src="static/drone_dark.png" width="360" alt="RescueDrone Hexacopter" /><br/>**RescueDrone Tactical Hexacopter** | **Desain Aerodinamis & Avionik**: Wahana Hexacopter tanggap darurat berkecepatan tinggi dengan payload kit trauma darurat (AED / Kotak P3K). |
+| <img src="static/drone_bright.png" width="360" alt="RescueDrone High-Visibility" /><br/>**RescueDrone High-Visibility Mode** | **Pencahayaan & Visualisasi Operasional**: Tampilan visual kontras tinggi untuk identifikasi lokasi dan pengamatan lapangan di segala cuaca. |
+| ![Hero Landing & 3D Drone](docs/screenshots/hero_3d_drone.png)<br/>*(Halaman Lapor Warga)* | **Portal Publik & 3D Digital Twin**: Animasi 3D Hexacopter dinamis menggunakan Three.js WebGL dengan bilah baling-baling berputar dan pencahayaan studio. |
+| ![Maxim Location Picker](docs/screenshots/reporter_map.png)<br/>*(Map Picker)* | **Maxim/Uber-Style Location Picker**: Penentuan titik insiden instan dengan pin tengah yang presisi, auto-reverse geocoding (Nominatim), dan deteksi GPS saksi mata. |
+| ![Tactical Admin Dashboard](docs/screenshots/admin_dashboard.png)<br/>*(Tactical HUD)* | **Tactical GCS HUD & Live Telemetry**: Indikator instrumen penerbangan nyata (ketinggian relatif, kecepatan udara, watt baterai, GPS satelit, heading compass). |
+| ![Mission Planner Synchronization](docs/screenshots/mission_planner_sync.png)<br/>*(MAVLink Sync)* | **Sinkronisasi Waypoint MAVLink**: Injeksi rute misi dari web yang langsung ter-upload dan terbaca secara *real-time* di Mission Planner. |
 
 ---
 
