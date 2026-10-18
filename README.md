@@ -153,19 +153,29 @@ flowchart TD
 
 ---
 
-## 🛠️ Spesifikasi Hardware & Avionik
+## 🛠️ Desain 3D CAD & Realisasi Prototipe Fisik
 
-| Komponen | Spesifikasi / Model Rekomendasi |
+Proyek ini tidak hanya berfokus pada perangkat lunak, tetapi juga mencakup perancangan struktur mekanikal rangka dan integrasi avionik fisik secara menyeluruh:
+
+| 📐 Desain 3D CAD (Digital Twin) | 🛸 Realisasi Prototipe Fisik (Field Test) |
+| :---: | :---: |
+| <img src="docs/hardware/cad_3d_model.png" width="460" alt="Desain 3D CAD Drone Rescue" style="border-radius:10px;" /> | <img src="docs/hardware/physical_prototype.jpg" width="460" alt="Realisasi Prototipe Fisik Drone" style="border-radius:10px;" /> |
+| **Model CAD**: Rangka kustom dengan arm tube serat karbon, pelindung baling-baling oranye, dudukan antena GPS elevated, dan kompartemen avionik. | **Prototipe Nyata**: Wahana uji lapangan dengan *landing gear* tinggi, Flight Controller Pixhawk terintegrasi, dan komponen kustom *3D-printed*. |
+
+---
+
+## ⚙️ Spesifikasi Hardware & Avionik
+
+| Komponen | Spesifikasi / Konfigurasi Nyata |
 | :--- | :--- |
-| **Airframe** | Hexacopter Frame 650mm – 850mm Carbon Fiber |
-| **Flight Controller** | Pixhawk 4 / Holybro Pixhawk 6C / Cube Orange |
-| **Firmware** | ArduPilot Copter v4.4+ (atau PX4 Autopilot) |
-| **Sistem Navigasi** | Dual GPS Neo-M8N / Holybro M9N + Digital Compass & Barometer |
-| **Telemetry Link** | Holybro SiK Telemetry Radio 433MHz / 915MHz (500mW) |
-| **Motor & ESC** | Brushless Motor 400KV–620KV + ESC 40A–60A 6S BLHeli_32 |
-| **Propeller** | 13 – 15 inch Foldable Carbon Fiber Propellers |
-| **Baterai** | 6S LiPo 16000mAh – 22000mAh (High Discharge) |
-| **Mekanisme Payload** | Kotak Quick-Release dengan kait Micro-Servo untuk AED / Trauma Kit |
+| **Airframe** | Custom Carbon Fiber Quadcopter (Tube Ø16mm) + 3D Printed Brackets |
+| **Flight Controller** | Pixhawk Autopilot (ArduPilot Copter Firmware) |
+| **Sistem Navigasi** | Eksternal GPS Compass Tower Neo-M8N + Barometer internal |
+| **Propulsi** | Brushless Motors + Tri-Blade (3-Bilah) High-Efficiency Propellers |
+| **Safety Features** | Pelindung Baling-baling (*Propeller Guards*) oranye visibilitas tinggi |
+| **Landing Gear** | Tall High-Clearance Struts (Melindungi kompartemen payload bawah) |
+| **Telemetry Link** | Holybro SiK Telemetry Radio 433MHz / 915MHz & MAVLink UDP Forwarder |
+| **Payload Box** | Kompartemen pelepasan cepat (*Quick-Release*) muatan darurat (AED / P3K) |
 
 ---
 
